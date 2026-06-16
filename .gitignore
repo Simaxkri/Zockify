@@ -1,0 +1,5 @@
+# Lokale Einzel-Spieldateien - nur in Zockify (index.html) eingebettet,
+# sollen NICHT ins GitHub-Repo (bleiben aber lokal im Ordner)
+crossy-road.html
+flappy.html
+tic-tac-toe.html
