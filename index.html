@@ -53,6 +53,7 @@
   .card .desc { margin-top: 8px; font-size: 14px; color: #94a3b8; }
   .card.ttt   { --c: #38bdf8; }
   .card.flappy{ --c: #ffce3a; }
+  .card.color { --c: #a855f7; }
   .card .name { color: var(--c); }
   .footer { margin-top: 44px; color: #5d6b85; font-size: 13px; }
   .footer kbd {
@@ -82,6 +83,11 @@
         <div class="ico">🐦</div>
         <div class="name">Flappy Bird</div>
         <div class="desc">Highscore jagen · Shop &amp; Skins</div>
+      </div>
+      <div class="card color" data-game="color">
+        <div class="ico">🎨</div>
+        <div class="name">Farbsuche</div>
+        <div class="desc">Finde die andere Farbe</div>
       </div>
     </div>
 
@@ -653,6 +659,7 @@
   }
 
   function iconFor(sym) { return sym === "X" ? iconX : iconO; }
+  function winVerb(sym) { return playerName(sym) === "Du" ? "gewinnst" : "gewinnt"; }
 
   function render() {
     document.querySelectorAll(".cell").forEach((c, i) => {
@@ -725,7 +732,7 @@
         winLine.forEach(idx => boardEl.children[idx].classList.add("win"));
         drawWinLine(winLine, winner);
       }
-      statusEl.textContent = `${playerName(winner)} (${iconFor(winner)}) gewinnt! 🎉`;
+      statusEl.textContent = `${playerName(winner)} (${iconFor(winner)}) ${winVerb(winner)}! 🎉`;
     }
     render();
 
@@ -980,7 +987,7 @@
       document.getElementById("winTitle").textContent = "Unentschieden!";
     } else {
       document.getElementById("trophy").textContent = "🏆";
-      document.getElementById("winTitle").textContent = `${playerName(winner)} gewinnt!`;
+      document.getElementById("winTitle").textContent = `${playerName(winner)} ${winVerb(winner)}!`;
     }
     document.getElementById("winScore").textContent = `${scores.X} : ${scores.O}`;
     document.getElementById("winNameX").textContent = mode === "bot" ? "Du" : "Spieler 1";
@@ -2859,12 +2866,567 @@ loop();
 </html>
 </template>
 
+  <template id="tpl-color">
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Farbsuche</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --cell: #334155;
+    --cell-hover: #3f4d63;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --accent: #a855f7;
+    --good: #22c55e;
+    --bad: #ef4444;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(1200px 600px at 50% -10%, #1e293b, var(--bg));
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    -webkit-user-select: none; user-select: none;
+  }
+  .app { width: 100%; max-width: 460px; }
+  h1 {
+    text-align: center;
+    margin: 0 0 4px;
+    font-size: 30px;
+    letter-spacing: 0.5px;
+    color: var(--accent);
+  }
+  .subtitle { text-align: center; color: var(--muted); margin: 0 0 20px; font-size: 14px; }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid #2b3a52;
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+  .group-label {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--muted); margin-bottom: 8px;
+  }
+  .options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .opt {
+    background: var(--cell); border: 1px solid transparent; color: var(--text);
+    padding: 10px 8px; border-radius: 10px; cursor: pointer;
+    font-size: 14px; transition: all 0.15s;
+  }
+  .opt:hover { background: var(--cell-hover); }
+  .opt.active {
+    border-color: var(--accent); background: #2e2746;
+    box-shadow: 0 0 0 2px rgba(168,85,247,0.25);
+  }
+
+  /* ---------- Schieberegler (wie Tic Tac Toe) ---------- */
+  .slider {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 8px; border-radius: 6px;
+    background: var(--cell); outline: none; margin: 4px 0;
+  }
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--accent); cursor: pointer;
+    border: 2px solid #0f172a; box-shadow: 0 0 0 1px var(--accent);
+  }
+  .slider::-moz-range-thumb {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--accent); cursor: pointer; border: 2px solid #0f172a;
+  }
+  #mistakeVal { color: var(--accent); font-weight: 700; }
+  .slider:disabled { opacity: 0.4; cursor: not-allowed; }
+  .hidden { display: none !important; }
+
+  .btn {
+    width: 100%; padding: 14px; border-radius: 12px; border: none;
+    font-size: 16px; font-weight: 700; cursor: pointer;
+    background: var(--cell); color: var(--text); transition: background 0.15s, transform 0.1s;
+  }
+  .btn:hover { background: var(--cell-hover); }
+  .btn:active { transform: translateY(1px); }
+  .btn.primary { background: var(--accent); color: #fff; }
+  .btn.primary:hover { background: #9333ea; }
+
+  /* ---------- HUD ---------- */
+  .hud {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 10px; margin-bottom: 14px;
+  }
+  .stat { text-align: center; flex: 1; }
+  .stat .num { font-size: 26px; font-weight: 800; line-height: 1; }
+  .stat .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+  .stat.score .num { color: var(--accent); }
+  .stat.best .num { color: var(--accent); }
+
+  .menu-best {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: var(--cell); border-radius: 12px;
+    padding: 10px 14px; margin-bottom: 16px;
+    font-size: 15px; font-weight: 700;
+  }
+  #menuBest { color: var(--accent); font-size: 20px; }
+  .stat.level .num { color: #38bdf8; }
+
+  .timebar-wrap {
+    height: 12px; border-radius: 8px; background: var(--cell);
+    overflow: hidden; margin-bottom: 18px;
+  }
+  .timebar {
+    height: 100%; width: 100%;
+    background: linear-gradient(90deg, #22c55e, #84cc16);
+    transition: width 0.1s linear, background 0.2s;
+  }
+  .timebar.warn { background: linear-gradient(90deg, #f59e0b, #f97316); }
+  .timebar.danger { background: linear-gradient(90deg, #ef4444, #f97316); }
+
+  /* ---------- Spielfeld ---------- */
+  .grid {
+    display: grid; gap: clamp(4px, 1.5vw, 9px);
+    width: 100%; aspect-ratio: 1 / 1;
+  }
+  .tile {
+    border: none; border-radius: 12px; cursor: pointer; padding: 0;
+    width: 100%; height: 100%;
+    transition: transform 0.08s, box-shadow 0.12s;
+  }
+  .tile:hover { transform: scale(1.04); }
+  .tile:active { transform: scale(0.96); }
+  .tile.correct {
+    animation: pop 0.4s ease-out;
+    box-shadow: 0 0 0 4px var(--good), 0 0 24px var(--good);
+  }
+  .tile.wrong {
+    animation: shake 0.4s;
+    box-shadow: 0 0 0 4px var(--bad);
+  }
+  .tile.reveal { box-shadow: 0 0 0 4px #fff, 0 0 24px rgba(255,255,255,0.6); }
+  @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.18); } 100% { transform: scale(1); } }
+  @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+
+  .feedback { text-align: center; min-height: 22px; margin-top: 12px; font-size: 15px; font-weight: 600; }
+  .feedback.good { color: var(--good); }
+  .feedback.bad { color: var(--bad); }
+
+  .esc-btn {
+    position: fixed; top: 16px; left: 16px;
+    width: auto; padding: 10px 16px; font-size: 14px;
+    z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+  }
+
+  /* ---------- Game Over ---------- */
+  #overScreen {
+    position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    z-index: 80; padding: 24px;
+    background: radial-gradient(1200px 600px at 50% -10%, #1e293b, var(--bg));
+  }
+  .over-card {
+    text-align: center; background: var(--panel); border: 1px solid #2b3a52;
+    border-radius: 20px; padding: 36px 32px; width: min(380px, 100%);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .over-emoji { font-size: 72px; line-height: 1; animation: pop 0.5s ease-out; }
+  .over-card h2 { margin: 12px 0 4px; font-size: 26px; }
+  .over-score { font-size: 56px; font-weight: 800; color: var(--accent); margin: 6px 0; }
+  .over-sub { color: var(--muted); font-size: 15px; margin-bottom: 8px; }
+  .new-best { color: var(--accent); font-weight: 700; margin: 6px 0 4px; }
+
+  /* ---------- Zahnrad / Einstellungen (wie Tic Tac Toe) ---------- */
+  .gear-btn {
+    position: fixed; top: 16px; right: 16px;
+    width: 46px; height: 46px; border-radius: 50%;
+    border: none; background: var(--cell); color: var(--text);
+    font-size: 22px; cursor: pointer; z-index: 10;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+    transition: transform 0.3s, background 0.15s;
+  }
+  .gear-btn:hover { background: var(--cell-hover); transform: rotate(60deg); }
+
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100; padding: 16px;
+  }
+  .modal {
+    background: var(--panel); border: 1px solid #2b3a52;
+    border-radius: 16px; padding: 22px; width: min(400px, 100%);
+  }
+  .modal h2 { margin: 0 0 16px; font-size: 20px; }
+  .swatches { display: flex; gap: 10px; flex-wrap: wrap; }
+  .swatch {
+    width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
+    border: 3px solid transparent; padding: 0; transition: transform 0.1s;
+  }
+  .swatch:hover { transform: scale(1.12); }
+  .swatch.active { border-color: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,0.25); }
+  .swatch.rainbow {
+    background: conic-gradient(#ef4444,#f97316,#eab308,#22c55e,#3b82f6,#6366f1,#a855f7,#ef4444);
+  }
+
+  /* Regenbogen-Modus: Knöpfe bunt (wie bei Tic Tac Toe) */
+  body.rainbow h1 {
+    background: linear-gradient(90deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #a855f7);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  body.rainbow .opt { color: #fff; }
+  body.rainbow .opt:nth-child(7n+1) { background: #ef4444; }
+  body.rainbow .opt:nth-child(7n+2) { background: #f97316; }
+  body.rainbow .opt:nth-child(7n+3) { background: #eab308; }
+  body.rainbow .opt:nth-child(7n+4) { background: #22c55e; }
+  body.rainbow .opt:nth-child(7n+5) { background: #3b82f6; }
+  body.rainbow .opt:nth-child(7n+6) { background: #6366f1; }
+  body.rainbow .opt:nth-child(7n+7) { background: #a855f7; }
+  body.rainbow .opt.active { border-color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,0.4); }
+  body.rainbow .btn.primary {
+    background: linear-gradient(90deg,#ef4444,#f97316,#eab308,#22c55e,#3b82f6,#a855f7);
+    color: #fff;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Farbsuche</h1>
+  <p class="subtitle">Finde das Kästchen mit der abweichenden Farbe</p>
+
+  <!-- ===== Menü ===== -->
+  <div id="menu">
+    <button class="gear-btn" id="gearBtn" title="Einstellungen">⚙</button>
+    <div class="panel">
+      <div class="menu-best">🏆 Bestwert: <span id="menuBest">0</span></div>
+      <div class="group-label">Schwierigkeit</div>
+      <div class="options" id="diffOptions" style="grid-template-columns: repeat(2, 1fr);">
+        <button class="opt" data-diff="easy">😀 Leicht</button>
+        <button class="opt active" data-diff="normal">🙂 Normal</button>
+        <button class="opt" data-diff="hard">😈 Schwer</button>
+        <button class="opt" data-diff="insane">💀 Sehr schwer</button>
+      </div>
+      <div id="mistakeWrap">
+        <div class="group-label" style="margin-top:16px">Fehler bis Spielende: <span id="mistakeVal">5</span></div>
+        <input type="range" id="mistakeSlider" class="slider" min="-1" max="25" value="5">
+      </div>
+      <div class="group-label" style="margin-top:16px">So gehts</div>
+      <p style="color:var(--muted);font-size:14px;line-height:1.5;margin:0;">
+        Tippe das Feld an, das eine andere Farbe hat. Jeder Treffer bringt Punkte und etwas Zeit –
+        das Raster wird größer und der Unterschied kleiner. Daneben getippt kostet Zeit.
+        Läuft die Zeit ab, ist Schluss.
+      </p>
+    </div>
+    <button class="btn primary" id="startBtn">▶ Spiel starten</button>
+  </div>
+
+  <!-- ===== Spiel ===== -->
+  <div id="game" class="hidden">
+    <div class="hud">
+      <div class="stat level"><div class="num" id="levelVal">1</div><div class="lbl">Level</div></div>
+      <div class="stat score"><div class="num" id="scoreVal">0</div><div class="lbl">Punkte</div></div>
+      <div class="stat best"><div class="num" id="bestVal">0</div><div class="lbl">Bestwert</div></div>
+    </div>
+    <div class="timebar-wrap"><div class="timebar" id="timebar"></div></div>
+    <div class="grid" id="grid"></div>
+    <div class="feedback" id="feedback"></div>
+  </div>
+</div>
+
+<button class="btn primary esc-btn hidden" id="backToMenu">☰ Menü (Esc)</button>
+
+<!-- ===== Game Over ===== -->
+<div id="overScreen" class="hidden">
+  <div class="over-card">
+    <div class="over-emoji" id="overEmoji">🎨</div>
+    <h2 id="overTitle">Zeit abgelaufen!</h2>
+    <div class="over-score" id="overScore">0</div>
+    <div class="over-sub" id="overSub">Level 1 erreicht</div>
+    <div class="new-best hidden" id="newBest">🏆 Neuer Bestwert!</div>
+    <button class="btn primary" id="againBtn" style="margin-top:18px;">↻ Nochmal</button>
+    <button class="btn" id="overToMenu" style="margin-top:10px;">☰ Zurück zum Menü</button>
+  </div>
+</div>
+
+<!-- ===== Einstellungen (Zahnrad) ===== -->
+<div class="modal-overlay hidden" id="settingsModal">
+  <div class="modal">
+    <h2>⚙ Einstellungen</h2>
+    <div class="group-label">Knopffarbe</div>
+    <div class="swatches" id="swatches">
+      <button class="swatch" data-color="#22c55e" style="background:#22c55e" title="Grün"></button>
+      <button class="swatch" data-color="#ef4444" style="background:#ef4444" title="Rot"></button>
+      <button class="swatch" data-color="#f97316" style="background:#f97316" title="Orange"></button>
+      <button class="swatch" data-color="#eab308" style="background:#eab308" title="Gelb"></button>
+      <button class="swatch" data-color="#3b82f6" style="background:#3b82f6" title="Blau"></button>
+      <button class="swatch" data-color="#6366f1" style="background:#6366f1" title="Indigo"></button>
+      <button class="swatch active" data-color="#a855f7" style="background:#a855f7" title="Violett"></button>
+      <button class="swatch rainbow" data-color="rainbow" title="Regenbogen"></button>
+    </div>
+    <button class="btn primary" id="closeSettings" style="margin-top:22px;">Fertig</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  // ---------- Einstellungen je Schwierigkeit ----------
+  const DIFF = {
+    easy:   { time: 22, startCols: 2, bonus: 1.8, penalty: 1.0, deltaBase: 62, deltaMin: 15, grow: 0.38, maxCols: 6 },
+    normal: { time: 15, startCols: 2, bonus: 1.4, penalty: 1.8, deltaBase: 52, deltaMin: 10, grow: 0.45, maxCols: 7 },
+    hard:   { time: 11, startCols: 2, bonus: 1.0, penalty: 2.8, deltaBase: 44, deltaMin: 7,  grow: 0.6,  maxCols: 8 },
+    insane: { time: 9,  startCols: 3, bonus: 0.8, penalty: 3.5, deltaBase: 40, deltaMin: 6,  grow: 0.7,  maxCols: 9 },
+  };
+  const BEST_KEY = "farbsuche_best";
+
+  let diffName = "normal";
+  let cfg = DIFF[diffName];
+  let mistakeLimit = 5;      // -1 = Aus (kein Limit)
+  let level, score, timeLeft, maxTime, mistakes, running, lastTick;
+  let bests = loadBests();          // Bestwert je Schwierigkeit
+  let best = bests[diffName];
+  let rafId = null;
+
+  function loadBests() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(BEST_KEY) || "{}");
+      return Object.assign({ easy: 0, normal: 0, hard: 0, insane: 0 },
+                           (raw && typeof raw === "object") ? raw : {});
+    } catch (_) {
+      return { easy: 0, normal: 0, hard: 0, insane: 0 };
+    }
+  }
+  function saveBests() { localStorage.setItem(BEST_KEY, JSON.stringify(bests)); }
+  function updateBestDisplay() {
+    document.getElementById("bestVal").textContent = best;
+    document.getElementById("menuBest").textContent = best;
+  }
+
+  const menuEl   = document.getElementById("menu");
+  const gameEl   = document.getElementById("game");
+  const gridEl   = document.getElementById("grid");
+  const timebar  = document.getElementById("timebar");
+  const feedback = document.getElementById("feedback");
+  const escBtn   = document.getElementById("backToMenu");
+  const overEl   = document.getElementById("overScreen");
+
+  updateBestDisplay();
+
+  // ---------- Schwierigkeitsauswahl ----------
+  document.getElementById("diffOptions").addEventListener("click", e => {
+    const btn = e.target.closest(".opt");
+    if (!btn) return;
+    diffName = btn.dataset.diff;
+    cfg = DIFF[diffName];
+    best = bests[diffName];
+    updateBestDisplay();
+    document.querySelectorAll("#diffOptions .opt")
+      .forEach(b => b.classList.toggle("active", b === btn));
+    if (diffName === "insane") {
+      // Sehr schwer: kein Fehler erlaubt, Regler ausblenden
+      mistakeLimit = 0;
+      mistakeWrap.classList.add("hidden");
+    } else {
+      mistakeWrap.classList.remove("hidden");
+      mistakeLimit = parseInt(mistakeSlider.value, 10);
+      mistakeVal.textContent = mistakeLimit < 0 ? "Aus" : mistakeLimit;
+    }
+  });
+
+  const mistakeWrap = document.getElementById("mistakeWrap");
+  const mistakeSlider = document.getElementById("mistakeSlider");
+  const mistakeVal = document.getElementById("mistakeVal");
+  mistakeSlider.addEventListener("input", () => {
+    mistakeLimit = parseInt(mistakeSlider.value, 10);
+    mistakeVal.textContent = mistakeLimit < 0 ? "Aus" : mistakeLimit;
+  });
+
+  // ---------- Farben ----------
+  // Liefert {base, odd, oddIndex} für das aktuelle Level
+  function buildColors(cols) {
+    const tiles = cols * cols;
+    const h = Math.floor(Math.random() * 360);
+    const s = 55 + Math.floor(Math.random() * 30);   // 55-85 %
+    const l = 35 + Math.floor(Math.random() * 30);   // 35-65 %
+    // Farbunterschied schrumpft mit Level, Untergrenze je Schwierigkeit
+    const delta = Math.max(cfg.deltaMin, cfg.deltaBase - level * 1.8);
+    // Abweichung mal heller, mal dunkler – aber im gültigen Bereich halten
+    let oddL = l + delta;
+    if (oddL > 92) oddL = l - delta;
+    const base = `hsl(${h}, ${s}%, ${l}%)`;
+    const odd  = `hsl(${h}, ${s}%, ${Math.max(8, Math.min(92, oddL))}%)`;
+    const oddIndex = Math.floor(Math.random() * tiles);
+    return { base, odd, oddIndex, tiles };
+  }
+
+  function colsForLevel(lvl) {
+    return Math.min(cfg.maxCols, cfg.startCols + Math.floor((lvl - 1) * cfg.grow));
+  }
+
+  // ---------- Runde aufbauen ----------
+  function nextRound() {
+    const cols = colsForLevel(level);
+    const { base, odd, oddIndex, tiles } = buildColors(cols);
+    gridEl.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    gridEl.innerHTML = "";
+    for (let i = 0; i < tiles; i++) {
+      const t = document.createElement("button");
+      t.className = "tile";
+      t.style.background = i === oddIndex ? odd : base;
+      t.dataset.odd = i === oddIndex ? "1" : "0";
+      t.addEventListener("click", () => onTile(t, i === oddIndex));
+      gridEl.appendChild(t);
+    }
+    document.getElementById("levelVal").textContent = level;
+  }
+
+  function onTile(tile, isOdd) {
+    if (!running) return;
+    if (isOdd) {
+      score++;
+      level++;
+      timeLeft = Math.min(maxTime, timeLeft + cfg.bonus);
+      document.getElementById("scoreVal").textContent = score;
+      tile.classList.add("correct");
+      showFeedback("Treffer! +" + cfg.bonus.toFixed(1) + "s", true);
+      setTimeout(nextRound, 130);
+    } else {
+      mistakes++;
+      timeLeft -= cfg.penalty;
+      tile.classList.add("wrong");
+      const info = mistakeLimit > 0 ? " · Fehler " + mistakes + "/" + mistakeLimit : "";
+      showFeedback("Daneben! −" + cfg.penalty.toFixed(1) + "s" + info, false);
+      setTimeout(() => tile.classList.remove("wrong"), 400);
+      if (mistakeLimit >= 0 && mistakes >= mistakeLimit) { return gameOver("mistakes"); }
+      if (timeLeft <= 0) { timeLeft = 0; gameOver("time"); }
+    }
+  }
+
+  let feedbackTimer = null;
+  function showFeedback(msg, good) {
+    feedback.textContent = msg;
+    feedback.className = "feedback " + (good ? "good" : "bad");
+    clearTimeout(feedbackTimer);
+    feedbackTimer = setTimeout(() => { feedback.textContent = ""; feedback.className = "feedback"; }, 700);
+  }
+
+  // ---------- Timer-Schleife ----------
+  function loop(now) {
+    if (!running) return;
+    const dt = (now - lastTick) / 1000;
+    lastTick = now;
+    timeLeft -= dt;
+    if (timeLeft <= 0) { timeLeft = 0; updateBar(); return gameOver("time"); }
+    updateBar();
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function updateBar() {
+    const pct = Math.max(0, (timeLeft / maxTime) * 100);
+    timebar.style.width = pct + "%";
+    timebar.classList.toggle("warn", pct <= 50 && pct > 25);
+    timebar.classList.toggle("danger", pct <= 25);
+  }
+
+  // ---------- Ablauf ----------
+  function startGame() {
+    level = 1; score = 0; mistakes = 0;
+    maxTime = cfg.time; timeLeft = cfg.time;
+    running = true;
+    document.getElementById("scoreVal").textContent = "0";
+    document.getElementById("bestVal").textContent = best;
+    feedback.textContent = ""; feedback.className = "feedback";
+    menuEl.classList.add("hidden");
+    overEl.classList.add("hidden");
+    gameEl.classList.remove("hidden");
+    escBtn.classList.remove("hidden");
+    nextRound();
+    updateBar();
+    lastTick = performance.now();
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function gameOver(reason) {
+    running = false;
+    cancelAnimationFrame(rafId);
+    // das richtige Feld kurz aufdecken
+    [...gridEl.children].forEach(t => {
+      if (t.dataset.odd === "1") t.classList.add("reveal");
+    });
+    const isBest = score > best;
+    if (isBest) { best = score; bests[diffName] = best; saveBests(); }
+    setTimeout(() => {
+      document.getElementById("overTitle").textContent =
+        reason === "mistakes" ? "Zu viele Fehler!" : "Zeit abgelaufen!";
+      document.getElementById("overScore").textContent = score;
+      document.getElementById("overSub").textContent = "Level " + level + " erreicht";
+      document.getElementById("overEmoji").textContent = score >= 20 ? "🏆" : score >= 10 ? "🎉" : "🎨";
+      document.getElementById("newBest").classList.toggle("hidden", !isBest);
+      gameEl.classList.add("hidden");
+      escBtn.classList.add("hidden");
+      overEl.classList.remove("hidden");
+    }, 600);
+  }
+
+  function showMenu() {
+    running = false;
+    cancelAnimationFrame(rafId);
+    gameEl.classList.add("hidden");
+    overEl.classList.add("hidden");
+    escBtn.classList.add("hidden");
+    menuEl.classList.remove("hidden");
+    updateBestDisplay();
+  }
+
+  document.getElementById("startBtn").addEventListener("click", startGame);
+  document.getElementById("againBtn").addEventListener("click", startGame);
+  document.getElementById("overToMenu").addEventListener("click", showMenu);
+  document.getElementById("backToMenu").addEventListener("click", showMenu);
+
+  // ---------- Einstellungen (Zahnrad, 1:1 wie Tic Tac Toe) ----------
+  const settingsModal = document.getElementById("settingsModal");
+  document.getElementById("gearBtn").addEventListener("click", () => settingsModal.classList.remove("hidden"));
+  document.getElementById("closeSettings").addEventListener("click", () => settingsModal.classList.add("hidden"));
+  settingsModal.addEventListener("click", e => {
+    if (e.target === settingsModal) settingsModal.classList.add("hidden");
+  });
+  document.getElementById("swatches").addEventListener("click", e => {
+    const btn = e.target.closest(".swatch");
+    if (!btn) return;
+    const color = btn.dataset.color;
+    document.querySelectorAll("#swatches .swatch").forEach(s => s.classList.toggle("active", s === btn));
+    if (color === "rainbow") {
+      document.body.classList.add("rainbow");
+    } else {
+      document.body.classList.remove("rainbow");
+      document.documentElement.style.setProperty("--accent", color);
+    }
+  });
+
+  document.addEventListener("keydown", e => {
+    if (e.key !== "Escape") return;
+    if (!settingsModal.classList.contains("hidden")) { settingsModal.classList.add("hidden"); }
+    else if (!overEl.classList.contains("hidden")) { showMenu(); }
+    else if (!gameEl.classList.contains("hidden")) { showMenu(); }
+  });
+})();
+</script>
+</body>
+</html>
+  </template>
+
 <script>
   const hub    = document.getElementById('hub');
   const player = document.getElementById('player');
   const frame  = document.getElementById('frame');
 
-  const TPL = { ttt: 'tpl-ttt', flappy: 'tpl-flappy' };
+  const TPL = { ttt: 'tpl-ttt', flappy: 'tpl-flappy', color: 'tpl-color' };
   let currentGame = null;
 
   function openGame(key) {
