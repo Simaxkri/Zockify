@@ -59,11 +59,19 @@
   .card.pc     { --c: #38bdf8; }
   .card.mobile { --c: #22c55e; }
   .card .name { color: var(--c); }
-  .footer { margin-top: 44px; color: #5d6b85; font-size: 13px; }
+  .footer { margin-top: 28px; color: #5d6b85; font-size: 13px; }
   .footer kbd {
     background: rgba(255,255,255,0.1); border-radius: 5px;
     padding: 1px 7px; font-family: inherit; font-size: 12px;
   }
+  .switch-device {
+    margin-top: 40px; padding: 10px 20px; cursor: pointer;
+    font-family: inherit; font-size: 14px; font-weight: 600; color: #cdd8ee;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 12px; transition: background 0.14s, border-color 0.14s;
+  }
+  .switch-device:hover { background: rgba(255,255,255,0.12); border-color: rgba(120,160,255,0.5); }
+  .switch-device:active { transform: translateY(1px); }
 
   /* ---------- Spiel-Player ---------- */
   .hidden { display: none !important; }
@@ -111,6 +119,8 @@
         <div class="desc">Finde die andere Farbe</div>
       </div>
     </div>
+
+    <button id="switchDevice" class="switch-device">💻📱 Gerät wechseln</button>
 
     <div class="footer">Im Spiel jederzeit mit <kbd>Esc</kbd> zurück zur Auswahl · im Menü auch per Button oben links</div>
   </div>
@@ -3552,8 +3562,7 @@ loop();
   );
 
   // ---------- Geraete-Auswahl beim Start (PC oder Mobile) ----------
-  const DEVICE_KEY  = 'zockifyDevice';
-  const SESSION_KEY = 'zockifySession';
+  const DEVICE_KEY = 'zockifyDevice';
 
   function applyDevice(dev) {
     document.body.classList.remove('device-pc', 'device-mobile');
@@ -3563,8 +3572,7 @@ loop();
 
   function chooseDevice(dev) {
     applyDevice(dev);
-    localStorage.setItem(DEVICE_KEY, dev);     // Wahl merken (fuer Reload wiederherstellen)
-    try { sessionStorage.setItem(SESSION_KEY, '1'); } catch (_) {}  // markiert: in diesem Tab schon gewaehlt
+    localStorage.setItem(DEVICE_KEY, dev);   // Wahl dauerhaft merken
     deviceSelect.classList.add('hidden');
     hub.classList.remove('hidden');
   }
@@ -3574,26 +3582,21 @@ loop();
     c.addEventListener('click', () => chooseDevice(c.dataset.device))
   );
 
-  // Wurde die Seite NEU GELADEN (F5 / Pull-to-Refresh) oder per Vor/Zurueck-Taste
-  // aufgerufen? Dann die vorige Wahl wiederherstellen -> direkt zum Hub, kein
-  // PC/Mobile-Screen. Bei einem NEUEN Aufruf (neuer Tab, URL neu eingegeben,
-  // Lesezeichen) erscheint die Auswahl wieder. Spielstand liegt im localStorage.
-  function navigationType() {
-    const nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
-    if (nav && nav.type) return nav.type;                                  // 'navigate' | 'reload' | 'back_forward'
-    if (performance.navigation) return performance.navigation.type === 1 ? 'reload' : 'navigate';  // aeltere Browser
-    return 'navigate';
+  // Geraet zeigen lassen (PC/Mobile-Auswahl wieder oeffnen).
+  function showDeviceSelect() {
+    hub.classList.add('hidden');
+    deviceSelect.classList.remove('hidden');
   }
+  const switchBtn = document.getElementById('switchDevice');
+  if (switchBtn) switchBtn.addEventListener('click', showDeviceSelect);
+
+  // Einmal gewaehlt = dauerhaft gemerkt: Bei jedem weiteren Aufruf/Reload (egal ob
+  // F5, Pull-to-Refresh oder neu geoeffnet) direkt in den Hub, KEIN PC/Mobile-Screen.
+  // Zum Umschalten dient der "Geraet wechseln"-Knopf im Hub. Spielstand bleibt im
+  // localStorage ohnehin erhalten.
   (function restoreDevice() {
     const saved = localStorage.getItem(DEVICE_KEY);
-    if (!saved) return;
-    const t = navigationType();
-    // sessionStorage ueberlebt JEDEN Reload im selben Tab (auch wenn navigationType()
-    // auf manchen Browsern wie Samsung Internet ungenau ist), wird aber bei einem
-    // neuen Tab/Aufruf geleert -> dann erscheint die Auswahl wieder.
-    let sameSession = false;
-    try { sameSession = sessionStorage.getItem(SESSION_KEY) === '1'; } catch (_) {}
-    if (sameSession || t === 'reload' || t === 'back_forward') {
+    if (saved === 'pc' || saved === 'mobile') {
       applyDevice(saved);
       deviceSelect.classList.add('hidden');
       hub.classList.remove('hidden');
