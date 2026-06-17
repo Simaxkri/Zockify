@@ -3516,8 +3516,9 @@ loop();
       if (currentGame === 'flappy' && document.body.dataset.device === 'pc') {
         const st = doc.createElement('style');
         st.textContent =
-          '#game{height:84vh!important;width:min(100vh,95vw)!important;}' +
-          // Shop passend zum grossen Feld mitskalieren (uniform -> keine Verzerrung im Shop)
+          // korrektes Seitenverhaeltnis 400:600 -> keine Verzerrung. So gross wie moeglich.
+          '#game{height:84vh!important;width:56vh!important;}' +
+          // Shop passend mitskalieren (uniform -> keine Verzerrung im Shop)
           '#shop{transform:scale(1.6);transform-origin:center center;}';
         doc.head.appendChild(st);
       }
