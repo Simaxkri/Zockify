@@ -14,8 +14,8 @@
     -webkit-user-select: none; user-select: none;
   }
 
-  /* ---------- Hub / Spielauswahl ---------- */
-  #hub {
+  /* ---------- Hub / Spielauswahl + Geraete-Auswahl ---------- */
+  #hub, #deviceSelect {
     min-height: 100%;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
@@ -54,6 +54,8 @@
   .card.ttt   { --c: #38bdf8; }
   .card.flappy{ --c: #ffce3a; }
   .card.color { --c: #a855f7; }
+  .card.pc     { --c: #38bdf8; }
+  .card.mobile { --c: #22c55e; }
   .card .name { color: var(--c); }
   .footer { margin-top: 44px; color: #5d6b85; font-size: 13px; }
   .footer kbd {
@@ -69,7 +71,24 @@
 </head>
 <body>
 
-  <div id="hub">
+  <div id="deviceSelect">
+    <div class="brand">ZOCKIFY</div>
+    <div class="tagline">Worauf spielst du?</div>
+    <div class="cards" style="max-width:560px;">
+      <div class="card pc" data-device="pc">
+        <div class="ico">💻</div>
+        <div class="name">PC</div>
+        <div class="desc">Maus &amp; Tastatur</div>
+      </div>
+      <div class="card mobile" data-device="mobile">
+        <div class="ico">📱</div>
+        <div class="name">Mobile</div>
+        <div class="desc">Touch / Handy</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="hub" class="hidden">
     <div class="brand">ZOCKIFY</div>
     <div class="tagline">Wähle dein Spiel</div>
 
@@ -3405,9 +3424,10 @@ loop();
   </template>
 
 <script>
-  const hub    = document.getElementById('hub');
-  const player = document.getElementById('player');
-  const frame  = document.getElementById('frame');
+  const hub          = document.getElementById('hub');
+  const deviceSelect = document.getElementById('deviceSelect');
+  const player       = document.getElementById('player');
+  const frame        = document.getElementById('frame');
 
   const TPL = { ttt: 'tpl-ttt', flappy: 'tpl-flappy', color: 'tpl-color' };
   let currentGame = null;
@@ -3496,6 +3516,18 @@ loop();
 
   document.querySelectorAll('[data-game]').forEach(c =>
     c.addEventListener('click', () => openGame(c.dataset.game))
+  );
+
+  // ---------- Geraete-Auswahl beim Start (PC oder Mobile) ----------
+  function chooseDevice(dev) {
+    document.body.classList.remove('device-pc', 'device-mobile');
+    document.body.classList.add('device-' + dev);   // fuer spaetere geraetespezifische Anpassungen
+    document.body.dataset.device = dev;
+    deviceSelect.classList.add('hidden');
+    hub.classList.remove('hidden');
+  }
+  document.querySelectorAll('[data-device]').forEach(c =>
+    c.addEventListener('click', () => chooseDevice(c.dataset.device))
   );
 </script>
 </body>
