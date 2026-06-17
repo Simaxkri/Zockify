@@ -3463,14 +3463,17 @@ loop();
   // Zockify-Zurueck-Button INS Spiel injizieren: oben links, im Look des Spiels,
   // nur sichtbar solange das Spiel-Menue offen ist (im Spiel selbst ausgeblendet).
   function injectBackButton(doc, key) {
-    const manualDev = document.body.dataset.device;                         // 'pc' | 'mobile' (manuelle Auswahl)
-    const autoDev   = (window.Zockify && window.Zockify.device) || 'handy'; // 'handy' | 'fold' | 'tablet' (erkannt)
+    // "Normales Handy": schmaler Bildschirm (Hochkant-Handy bzw. zugeklapptes Fold).
+    // Tablet / aufgeklapptes Fold sind breiter -> kurze Bildschirmseite >= 600px.
+    // Direkt an der echten Bildschirmbreite festgemacht (robust, ohne Abhaengigkeit
+    // von device.js oder der PC/Mobile-Wahl).
+    const isPhone = Math.min(window.innerWidth, window.innerHeight) < 600;
 
-    // Sonderfall: Flappy auf einem NORMALEN HANDY ->
+    // Flappy auf einem normalen Handy ->
     // normal grosser Button DIREKT im Spiel-Menue (im Spielbereich),
-    // statt als kleiner Eck-Button ueber der zentrierten "FLAPPY BIRD"-Schrift.
-    // Fold/Tablet bekommen den normalen Eck-Button (Standard unten) - auch normale Groesse.
-    if (key === 'flappy' && manualDev === 'mobile' && autoDev === 'handy') {
+    // statt als Eck-Button ueber der zentrierten "FLAPPY BIRD"-Schrift.
+    // Tablet / aufgeklapptes Fold bekommen den normalen Eck-Button (Standard unten).
+    if (key === 'flappy' && isPhone) {
       const menu = doc.getElementById('menu');
       if (menu) {
         const inBtn = doc.createElement('button');
