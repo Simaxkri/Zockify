@@ -89,6 +89,11 @@
   }
   .card:active { transform: translateY(-2px); }
   .card .ico { font-size: 64px; line-height: 1; }
+  .card .ico img {
+    width: 100%; height: auto; display: block;
+    border-radius: 14px;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.45);
+  }
   .card .name { margin-top: 16px; font-size: 24px; font-weight: 800; }
   .card .desc { margin-top: 8px; font-size: 14px; color: #94a3b8; }
   .card.ttt   { --c: #38bdf8; }
@@ -141,18 +146,18 @@
 
     <div class="cards">
       <div class="card ttt" data-game="ttt" data-keywords="tic tac toe ttt drei gewinnt kreuz kreis bot freund strategie">
-        <div class="ico">⭕❌</div>
+        <div class="ico"><img src="images/tictactoe.png" alt="Tic Tac Toe"></div>
         <div class="name">Tic Tac Toe</div>
         <div class="desc">Gegen Freund oder Bot</div>
       </div>
       <div class="card flappy" data-game="flappy" data-keywords="flappy bird vogel fliegen highscore shop skins arcade">
-        <div class="ico">🐦</div>
+        <div class="ico"><img src="images/flappy.png" alt="Flappy Bird"></div>
         <div class="name">Flappy Bird</div>
         <div class="desc">Highscore jagen · Shop &amp; Skins</div>
       </div>
-      <div class="card color" data-game="color" data-keywords="farbsuche farbe farben suche finde unterschied augen reaktion">
-        <div class="ico">🎨</div>
-        <div class="name">Farbsuche</div>
+      <div class="card color" data-game="color" data-keywords="tarnmodus tarnfarbe farbe farben suche finde unterschied augen reaktion">
+        <div class="ico"><img src="images/tarnmodus.png" alt="Tarnmodus"></div>
+        <div class="name">Tarnmodus</div>
         <div class="desc">Finde die andere Farbe</div>
       </div>
     </div>
@@ -2928,7 +2933,7 @@ loop();
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Farbsuche</title>
+<title>Tarnmodus</title>
 <meta name="color-scheme" content="only dark">
 <style>
   :root {
@@ -3156,7 +3161,7 @@ loop();
 </head>
 <body>
 <div class="app">
-  <h1>Farbsuche</h1>
+  <h1>Tarnmodus</h1>
   <p class="subtitle">Finde das Kästchen mit der abweichenden Farbe</p>
 
   <!-- ===== Menü ===== -->
