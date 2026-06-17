@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="de" style="color-scheme: dark;">
+<html lang="de" style="color-scheme: only dark;">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zockify</title>
-<meta name="color-scheme" content="dark">
+<meta name="color-scheme" content="only dark">
 <script src="device.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -121,15 +121,15 @@
 
   <template id="tpl-ttt">
 <!DOCTYPE html>
-<html lang="de" style="color-scheme: dark;">
+<html lang="de" style="color-scheme: only dark;">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tic Tac Toe</title>
-<meta name="color-scheme" content="dark">
+<meta name="color-scheme" content="only dark">
 <style>
   :root {
-    color-scheme: dark;   /* verhindert erzwungenes Umfaerben durch Handy-Dunkelmodus */
+    color-scheme: only dark;   /* verhindert erzwungenes Umfaerben durch Handy-Dunkelmodus */
     --bg: #0f172a;
     --panel: #1e293b;
     --cell: #334155;
@@ -1072,15 +1072,15 @@
 
   <template id="tpl-flappy">
 <!DOCTYPE html>
-<html lang="de" style="color-scheme: dark;">
+<html lang="de" style="color-scheme: only dark;">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Flappy Bird</title>
-<meta name="color-scheme" content="dark">
+<meta name="color-scheme" content="only dark">
 <style>
   :root {
-    color-scheme: dark;   /* verhindert erzwungenes Umfaerben durch Handy-Dunkelmodus */
+    color-scheme: only dark;   /* verhindert erzwungenes Umfaerben durch Handy-Dunkelmodus */
     --accent: #ffce3a;
     --accent-dark: #e0a800;
   }
@@ -2877,15 +2877,15 @@ loop();
 
   <template id="tpl-color">
 <!DOCTYPE html>
-<html lang="de" style="color-scheme: dark;">
+<html lang="de" style="color-scheme: only dark;">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Farbsuche</title>
-<meta name="color-scheme" content="dark">
+<meta name="color-scheme" content="only dark">
 <style>
   :root {
-    color-scheme: dark;   /* verhindert erzwungenes Umfaerben durch Handy-Dunkelmodus */
+    color-scheme: only dark;   /* verhindert erzwungenes Umfaerben durch Handy-Dunkelmodus */
     --bg: #0f172a;
     --panel: #1e293b;
     --cell: #334155;
@@ -3552,7 +3552,8 @@ loop();
   );
 
   // ---------- Geraete-Auswahl beim Start (PC oder Mobile) ----------
-  const DEVICE_KEY = 'zockifyDevice';
+  const DEVICE_KEY  = 'zockifyDevice';
+  const SESSION_KEY = 'zockifySession';
 
   function applyDevice(dev) {
     document.body.classList.remove('device-pc', 'device-mobile');
@@ -3562,7 +3563,8 @@ loop();
 
   function chooseDevice(dev) {
     applyDevice(dev);
-    localStorage.setItem(DEVICE_KEY, dev);   // Wahl merken, um sie bei einem Reload wiederherzustellen
+    localStorage.setItem(DEVICE_KEY, dev);     // Wahl merken (fuer Reload wiederherstellen)
+    try { sessionStorage.setItem(SESSION_KEY, '1'); } catch (_) {}  // markiert: in diesem Tab schon gewaehlt
     deviceSelect.classList.add('hidden');
     hub.classList.remove('hidden');
   }
@@ -3584,8 +3586,14 @@ loop();
   }
   (function restoreDevice() {
     const saved = localStorage.getItem(DEVICE_KEY);
+    if (!saved) return;
     const t = navigationType();
-    if (saved && (t === 'reload' || t === 'back_forward')) {
+    // sessionStorage ueberlebt JEDEN Reload im selben Tab (auch wenn navigationType()
+    // auf manchen Browsern wie Samsung Internet ungenau ist), wird aber bei einem
+    // neuen Tab/Aufruf geleert -> dann erscheint die Auswahl wieder.
+    let sameSession = false;
+    try { sameSession = sessionStorage.getItem(SESSION_KEY) === '1'; } catch (_) {}
+    if (sameSession || t === 'reload' || t === 'back_forward') {
       applyDevice(saved);
       deviceSelect.classList.add('hidden');
       hub.classList.remove('hidden');
