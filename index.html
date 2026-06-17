@@ -3515,7 +3515,10 @@ loop();
       // Intern bleibt das Spiel 400x600 - nur die Anzeige wird per CSS skaliert.
       if (currentGame === 'flappy' && document.body.dataset.device === 'pc') {
         const st = doc.createElement('style');
-        st.textContent = '#game{height:84vh!important;width:74vh!important;}';
+        st.textContent =
+          '#game{height:84vh!important;width:min(100vh,95vw)!important;}' +
+          // Shop passend zum grossen Feld mitskalieren (uniform -> keine Verzerrung im Shop)
+          '#shop{transform:scale(1.6);transform-origin:center center;}';
         doc.head.appendChild(st);
       }
     } catch (_) { /* falls Zugriff blockiert: Parent-Esc greift weiterhin */ }
