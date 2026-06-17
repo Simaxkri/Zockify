@@ -3509,19 +3509,6 @@ loop();
         }
       }, true);
       if (currentGame) injectBackButton(doc, currentGame);
-
-      // PC + Flappy: NUR das Hauptspielfeld (#game) groesser/breiter anzeigen.
-      // Wichtig: #game statt canvas - sonst werden auch die Shop-Vorschau-Canvas aufgeblasen!
-      // Intern bleibt das Spiel 400x600 - nur die Anzeige wird per CSS skaliert.
-      if (currentGame === 'flappy' && document.body.dataset.device === 'pc') {
-        const st = doc.createElement('style');
-        st.textContent =
-          // korrektes Seitenverhaeltnis 400:600 -> keine Verzerrung. So gross wie moeglich.
-          '#game{height:84vh!important;width:56vh!important;}' +
-          // Shop passend mitskalieren (uniform -> keine Verzerrung im Shop)
-          '#shop{transform:scale(1.6);transform-origin:center center;}';
-        doc.head.appendChild(st);
-      }
     } catch (_) { /* falls Zugriff blockiert: Parent-Esc greift weiterhin */ }
   });
 
