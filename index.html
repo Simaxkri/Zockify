@@ -59,19 +59,11 @@
   .card.pc     { --c: #38bdf8; }
   .card.mobile { --c: #22c55e; }
   .card .name { color: var(--c); }
-  .footer { margin-top: 28px; color: #5d6b85; font-size: 13px; }
+  .footer { margin-top: 44px; color: #5d6b85; font-size: 13px; }
   .footer kbd {
     background: rgba(255,255,255,0.1); border-radius: 5px;
     padding: 1px 7px; font-family: inherit; font-size: 12px;
   }
-  .switch-device {
-    margin-top: 40px; padding: 10px 20px; cursor: pointer;
-    font-family: inherit; font-size: 14px; font-weight: 600; color: #cdd8ee;
-    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
-    border-radius: 12px; transition: background 0.14s, border-color 0.14s;
-  }
-  .switch-device:hover { background: rgba(255,255,255,0.12); border-color: rgba(120,160,255,0.5); }
-  .switch-device:active { transform: translateY(1px); }
 
   /* ---------- Spiel-Player ---------- */
   .hidden { display: none !important; }
@@ -119,8 +111,6 @@
         <div class="desc">Finde die andere Farbe</div>
       </div>
     </div>
-
-    <button id="switchDevice" class="switch-device">💻📱 Gerät wechseln</button>
 
     <div class="footer">Im Spiel jederzeit mit <kbd>Esc</kbd> zurück zur Auswahl · im Menü auch per Button oben links</div>
   </div>
@@ -3581,14 +3571,6 @@ loop();
   deviceSelect.querySelectorAll('[data-device]').forEach(c =>
     c.addEventListener('click', () => chooseDevice(c.dataset.device))
   );
-
-  // Geraet zeigen lassen (PC/Mobile-Auswahl wieder oeffnen).
-  function showDeviceSelect() {
-    hub.classList.add('hidden');
-    deviceSelect.classList.remove('hidden');
-  }
-  const switchBtn = document.getElementById('switchDevice');
-  if (switchBtn) switchBtn.addEventListener('click', showDeviceSelect);
 
   // Einmal gewaehlt = dauerhaft gemerkt: Bei jedem weiteren Aufruf/Reload (egal ob
   // F5, Pull-to-Refresh oder neu geoeffnet) direkt in den Hub, KEIN PC/Mobile-Screen.
