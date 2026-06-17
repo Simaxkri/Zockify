@@ -3439,12 +3439,16 @@ loop();
   const frame        = document.getElementById('frame');
 
   const TPL = { ttt: 'tpl-ttt', flappy: 'tpl-flappy', color: 'tpl-color' };
+  const GAME_KEY = 'zockifyGame';   // gemerktes offenes Spiel (sessionStorage)
   let currentGame = null;
 
   function openGame(key) {
     const tpl = document.getElementById(TPL[key]);
     if (!tpl) return;
     currentGame = key;
+    // Offenes Spiel im sessionStorage merken: ueberlebt einen Reload, wird aber
+    // beim Schliessen der Seite geleert -> nach dem Schliessen landet man im Hub.
+    try { sessionStorage.setItem(GAME_KEY, key); } catch (_) {}
     // DOCTYPE voranstellen -> Standards-Modus im iframe (kein Quirks-Layout)
     frame.srcdoc = '<!DOCTYPE html>' + tpl.innerHTML;
     hub.classList.add('hidden');
@@ -3456,6 +3460,7 @@ loop();
     hub.classList.remove('hidden');
     frame.srcdoc = '';          // Spiel zuruecksetzen (Highscores bleiben in localStorage)
     currentGame = null;
+    try { sessionStorage.removeItem(GAME_KEY); } catch (_) {}
   }
 
   // Ist im Spiel gerade das Spiel-Menue (#menu) offen?
@@ -3572,10 +3577,8 @@ loop();
     c.addEventListener('click', () => chooseDevice(c.dataset.device))
   );
 
-  // Einmal gewaehlt = dauerhaft gemerkt: Bei jedem weiteren Aufruf/Reload (egal ob
-  // F5, Pull-to-Refresh oder neu geoeffnet) direkt in den Hub, KEIN PC/Mobile-Screen.
-  // Zum Umschalten dient der "Geraet wechseln"-Knopf im Hub. Spielstand bleibt im
-  // localStorage ohnehin erhalten.
+  // Einmal gewaehlt = dauerhaft gemerkt: Bei jedem weiteren Aufruf/Reload direkt in
+  // den Hub, KEIN PC/Mobile-Screen. Spielstand bleibt im localStorage ohnehin erhalten.
   (function restoreDevice() {
     const saved = localStorage.getItem(DEVICE_KEY);
     if (saved === 'pc' || saved === 'mobile') {
@@ -3583,6 +3586,16 @@ loop();
       deviceSelect.classList.add('hidden');
       hub.classList.remove('hidden');
     }
+  })();
+
+  // War beim Reload ein Spiel offen? Dann zurueck ins Spiel (sessionStorage ueberlebt
+  // den Reload). Nach dem Schliessen der Seite ist sessionStorage leer -> man bleibt
+  // im Hub. Nur, wenn ueberhaupt schon ein Geraet gewaehlt wurde.
+  (function restoreGame() {
+    if (!localStorage.getItem(DEVICE_KEY)) return;
+    let g = null;
+    try { g = sessionStorage.getItem(GAME_KEY); } catch (_) {}
+    if (g && TPL[g]) openGame(g);
   })();
 </script>
 </body>
