@@ -3510,11 +3510,12 @@ loop();
       }, true);
       if (currentGame) injectBackButton(doc, currentGame);
 
-      // PC + Flappy: Spielfeld groesser anzeigen (sonst sehr schmal auf breiten Bildschirmen).
-      // Intern bleibt das Spiel 400x600 - nur die Anzeige wird per CSS hochskaliert.
+      // PC + Flappy: NUR das Hauptspielfeld (#game) groesser/breiter anzeigen.
+      // Wichtig: #game statt canvas - sonst werden auch die Shop-Vorschau-Canvas aufgeblasen!
+      // Intern bleibt das Spiel 400x600 - nur die Anzeige wird per CSS skaliert.
       if (currentGame === 'flappy' && document.body.dataset.device === 'pc') {
         const st = doc.createElement('style');
-        st.textContent = 'canvas{height:84vh!important;width:56vh!important;}';
+        st.textContent = '#game{height:84vh!important;width:74vh!important;}';
         doc.head.appendChild(st);
       }
     } catch (_) { /* falls Zugriff blockiert: Parent-Esc greift weiterhin */ }
