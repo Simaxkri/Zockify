@@ -3474,6 +3474,15 @@ loop();
       padding: '9px 16px', fontSize: '14px', borderRadius: '12px',
       cursor: 'pointer', boxShadow: '0 4px 14px rgba(0,0,0,0.45)'
     });
+    // NUR Mobile + Flappy: kompakter Eck-Button (nur Pfeil), damit er nicht
+    // ueber der zentrierten "FLAPPY BIRD"-Schrift liegt. PC bleibt unveraendert.
+    if (key === 'flappy' && document.body.dataset.device === 'mobile') {
+      btn.textContent = '⬅';
+      Object.assign(btn.style, {
+        top: '8px', left: '8px', padding: '8px 12px',
+        fontSize: '18px', lineHeight: '1', fontWeight: '800'
+      });
+    }
     btn.addEventListener('click', goHub);
     doc.body.appendChild(btn);
 
@@ -3500,6 +3509,14 @@ loop();
         }
       }, true);
       if (currentGame) injectBackButton(doc, currentGame);
+
+      // PC + Flappy: Spielfeld groesser anzeigen (sonst sehr schmal auf breiten Bildschirmen).
+      // Intern bleibt das Spiel 400x600 - nur die Anzeige wird per CSS hochskaliert.
+      if (currentGame === 'flappy' && document.body.dataset.device === 'pc') {
+        const st = doc.createElement('style');
+        st.textContent = 'canvas{height:84vh!important;width:56vh!important;}';
+        doc.head.appendChild(st);
+      }
     } catch (_) { /* falls Zugriff blockiert: Parent-Esc greift weiterhin */ }
   });
 
