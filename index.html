@@ -818,9 +818,10 @@
     if (gameOver) return;
     let idx;
     switch (difficulty) {
-      case "easy":   idx = randomMove(); break;
-      case "medium": idx = Math.random() < 0.5 ? smartMove() : randomMove(); break;
-      case "hard":   idx = Math.random() < 0.8 ? smartMove() : randomMove(); break;
+      // ~50% schlauer als vorher: kluger Zug haeufiger (easy 0->0.25, medium 0.5->0.75, hard 0.8->immer)
+      case "easy":   idx = Math.random() < 0.25 ? smartMove() : randomMove(); break;
+      case "medium": idx = Math.random() < 0.75 ? smartMove() : randomMove(); break;
+      case "hard":   idx = smartMove(); break;
       default:       idx = randomMove();
     }
     move(idx, AI);
@@ -3188,8 +3189,8 @@ loop();
 (function () {
   // ---------- Einstellungen je Schwierigkeit ----------
   const DIFF = {
-    easy:   { time: 22, startCols: 2, bonus: 1.8, penalty: 1.0, deltaBase: 62, deltaMin: 15, grow: 0.38, maxCols: 6 },
-    normal: { time: 15, startCols: 2, bonus: 1.4, penalty: 1.8, deltaBase: 52, deltaMin: 10, grow: 0.45, maxCols: 7 },
+    easy:   { time: 28, startCols: 2, bonus: 2.2, penalty: 0.7, deltaBase: 78, deltaMin: 24, grow: 0.30, maxCols: 5 },
+    normal: { time: 20, startCols: 2, bonus: 1.7, penalty: 1.3, deltaBase: 64, deltaMin: 16, grow: 0.38, maxCols: 6 },
     hard:   { time: 11, startCols: 2, bonus: 1.0, penalty: 2.8, deltaBase: 44, deltaMin: 7,  grow: 0.6,  maxCols: 8 },
     insane: { time: 9,  startCols: 3, bonus: 0.8, penalty: 3.5, deltaBase: 40, deltaMin: 6,  grow: 0.7,  maxCols: 9 },
   };
