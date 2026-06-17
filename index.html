@@ -3462,8 +3462,9 @@ loop();
     const btn = doc.createElement('button');
     btn.id = 'zockifyBack';
     btn.textContent = '⬅ Zurück';
-    // an das Spiel anpassen: dessen eigene Button-Klassen erben den Look
-    btn.className = key === 'ttt' ? 'btn primary' : 'btn';
+    // an das Spiel anpassen: dessen eigene Button-Klassen erben den Look.
+    // ttt + color nutzen 'btn primary' (= var(--accent)) -> passt sich der gewaehlten Farbe an.
+    btn.className = (key === 'ttt' || key === 'color') ? 'btn primary' : 'btn';
     Object.assign(btn.style, {
       position: 'fixed', top: '12px', left: '12px', zIndex: '99999',
       width: 'auto', flex: 'none', minWidth: '0',
