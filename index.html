@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zockify</title>
+<script src="device.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { height: 100%; }
@@ -3462,6 +3463,27 @@ loop();
   // Zockify-Zurueck-Button INS Spiel injizieren: oben links, im Look des Spiels,
   // nur sichtbar solange das Spiel-Menue offen ist (im Spiel selbst ausgeblendet).
   function injectBackButton(doc, key) {
+    const manualDev = document.body.dataset.device;                         // 'pc' | 'mobile' (manuelle Auswahl)
+    const autoDev   = (window.Zockify && window.Zockify.device) || 'handy'; // 'handy' | 'fold' | 'tablet' (erkannt)
+
+    // Sonderfall: Flappy auf einem NORMALEN HANDY ->
+    // normal grosser Button DIREKT im Spiel-Menue (im Spielbereich),
+    // statt als kleiner Eck-Button ueber der zentrierten "FLAPPY BIRD"-Schrift.
+    // Fold/Tablet bekommen den normalen Eck-Button (Standard unten) - auch normale Groesse.
+    if (key === 'flappy' && manualDev === 'mobile' && autoDev === 'handy') {
+      const menu = doc.getElementById('menu');
+      if (menu) {
+        const inBtn = doc.createElement('button');
+        inBtn.id = 'zockifyBack';
+        inBtn.className = 'btn ghost';            // Menue-Button-Look in normaler Groesse
+        inBtn.textContent = '⬅ Zurück zur Auswahl';
+        inBtn.addEventListener('click', goHub);
+        menu.appendChild(inBtn);                  // sitzt im Menue -> wird mit dem Menue ein-/ausgeblendet
+        return;
+      }
+    }
+
+    // Standard: fixierter Button oben links (PC sowie Fold/Tablet) - immer in normaler Groesse.
     const btn = doc.createElement('button');
     btn.id = 'zockifyBack';
     btn.textContent = '⬅ Zurück';
@@ -3474,15 +3496,6 @@ loop();
       padding: '9px 16px', fontSize: '14px', borderRadius: '12px',
       cursor: 'pointer', boxShadow: '0 4px 14px rgba(0,0,0,0.45)'
     });
-    // NUR Mobile + Flappy: kompakter Eck-Button (nur Pfeil), damit er nicht
-    // ueber der zentrierten "FLAPPY BIRD"-Schrift liegt. PC bleibt unveraendert.
-    if (key === 'flappy' && document.body.dataset.device === 'mobile') {
-      btn.textContent = '⬅';
-      Object.assign(btn.style, {
-        top: '8px', left: '8px', padding: '8px 12px',
-        fontSize: '18px', lineHeight: '1', fontWeight: '800'
-      });
-    }
     btn.addEventListener('click', goHub);
     doc.body.appendChild(btn);
 
@@ -3528,16 +3541,37 @@ loop();
   );
 
   // ---------- Geraete-Auswahl beim Start (PC oder Mobile) ----------
-  function chooseDevice(dev) {
+  const DEVICE_KEY = 'zockifyDevice';
+
+  function applyDevice(dev) {
     document.body.classList.remove('device-pc', 'device-mobile');
     document.body.classList.add('device-' + dev);   // fuer spaetere geraetespezifische Anpassungen
     document.body.dataset.device = dev;
+  }
+
+  function chooseDevice(dev) {
+    applyDevice(dev);
+    // Wahl fuer den aktuellen Tab merken: ueberlebt einen Reload (F5),
+    // wird aber bei einem NEUEN Aufruf (neuer Tab / frisch geoeffnet) geleert.
+    sessionStorage.setItem(DEVICE_KEY, dev);
     deviceSelect.classList.add('hidden');
     hub.classList.remove('hidden');
   }
   document.querySelectorAll('[data-device]').forEach(c =>
     c.addEventListener('click', () => chooseDevice(c.dataset.device))
   );
+
+  // Beim Reload (gleicher Tab) die vorige Wahl wiederherstellen -> direkt zum Hub,
+  // kein PC/Mobile-Screen. Bei einem neuen Aufruf ist sessionStorage leer ->
+  // die Auswahl erscheint wieder. Der Spielstand liegt im localStorage und bleibt ohnehin.
+  (function restoreDevice() {
+    const saved = sessionStorage.getItem(DEVICE_KEY);
+    if (saved === 'pc' || saved === 'mobile') {
+      applyDevice(saved);
+      deviceSelect.classList.add('hidden');
+      hub.classList.remove('hidden');
+    }
+  })();
 </script>
 </body>
 </html>
