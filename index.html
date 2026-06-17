@@ -494,11 +494,10 @@
 
     <div id="difficultyWrap" class="hidden">
       <div class="group-label" style="margin-top:14px">Schwierigkeit</div>
-      <div class="options diff" id="diffOptions">
+      <div class="options diff" id="diffOptions" style="grid-template-columns: repeat(3, 1fr);">
         <button class="opt active" data-diff="easy">😀 Einfach</button>
         <button class="opt" data-diff="medium">🙂 Mittel</button>
         <button class="opt" data-diff="hard">😎 Schwer</button>
-        <button class="opt" data-diff="insane">💀 Sehr schwer</button>
       </div>
     </div>
 
@@ -615,6 +614,7 @@
   let targetScore = 3;        // Regler-Wert: Punkte bzw. Gesamtrunden
   let scoreMode = "points";   // "points" = Punkte bis Sieg | "rounds" = feste Rundenzahl
   let matchOver = false;
+  let roundStarter = "X";     // wer die nächste Runde beginnt ("X" oder "O")
 
   const boardEl = document.getElementById("board");
   const statusEl = document.getElementById("status");
@@ -677,7 +677,7 @@
     return sym === "X" ? "Spieler 1" : "Spieler 2";
   }
 
-  const DIFF_NAMES = { easy: "Einfach", medium: "Mittel", hard: "Schwer", insane: "Sehr schwer" };
+  const DIFF_NAMES = { easy: "Einfach", medium: "Mittel", hard: "Schwer" };
 
   function updateLabels() {
     const nameX = mode === "bot" ? "Du" : "Spieler 1";
@@ -723,6 +723,12 @@
 
   function endGame(winner, winLine) {
     gameOver = true;
+    // Startspieler der nächsten Runde: bei Unentschieden der andere, bei Sieg der Verlierer
+    if (winner === "D") {
+      roundStarter = (roundStarter === "X") ? "O" : "X";
+    } else {
+      roundStarter = (winner === "X") ? "O" : "X";
+    }
     if (winner === "D") {
       scores.D++;
       statusEl.textContent = "Unentschieden! 🤝";
@@ -792,7 +798,6 @@
       case "easy":   idx = randomMove(); break;
       case "medium": idx = Math.random() < 0.5 ? smartMove() : randomMove(); break;
       case "hard":   idx = Math.random() < 0.8 ? smartMove() : randomMove(); break;
-      case "insane": idx = bestMove(); break;
       default:       idx = randomMove();
     }
     move(idx, AI);
@@ -825,57 +830,35 @@
     return randomMove();
   }
 
-  // Perfekter Zug per Minimax
-  function bestMove() {
-    let best = -Infinity, bestIdx = null;
-    for (const i of emptyCells(board)) {
-      const test = board.slice(); test[i] = AI;
-      const score = minimax(test, false);
-      if (score > best) { best = score; bestIdx = i; }
-    }
-    return bestIdx;
-  }
-
-  function minimax(b, isMaximizing) {
-    const win = getWinner(b);
-    if (win) {
-      const sym = b[win[0]];
-      return sym === AI ? 10 : -10;
-    }
-    if (b.every(Boolean)) return 0;
-
-    if (isMaximizing) {
-      let best = -Infinity;
-      for (const i of emptyCells(b)) {
-        const test = b.slice(); test[i] = AI;
-        best = Math.max(best, minimax(test, false));
-      }
-      return best;
-    } else {
-      let best = Infinity;
-      for (const i of emptyCells(b)) {
-        const test = b.slice(); test[i] = HUMAN;
-        best = Math.min(best, minimax(test, true));
-      }
-      return best;
-    }
-  }
-
   // ---------- Steuerung ----------
+  // Neues Match: Punkte zurücksetzen und Startspieler festlegen
+  function newMatch() {
+    scores = { X: 0, O: 0, D: 0 };
+    matchOver = false;
+    // 50/50, wer beginnt – gegen den Bot beginnt immer Spieler 1 (X)
+    roundStarter = (mode === "bot") ? "X" : (Math.random() < 0.5 ? "X" : "O");
+    startRound();
+  }
+
+  // Nächste Runde im laufenden Match (roundStarter wurde in endGame gesetzt)
   function newRound() {
+    startRound();
+  }
+
+  function startRound() {
     clearTimeout(autoRestartTimer);
     clearInterval(countdownTimer);
-    if (matchOver) {            // neues Match: Punkte zurücksetzen
-      scores = { X: 0, O: 0, D: 0 };
-      matchOver = false;
-    }
     board = Array(9).fill("");
-    current = HUMAN;
     gameOver = false;
+    current = roundStarter;
     clearWinLine();
     render();
     setStatus();
-    // Falls der Bot anfangen würde, hier nichts – Mensch beginnt immer als X
+    // Falls der Bot in dieser Runde beginnt, zieht er automatisch zuerst
+    if (mode === "bot" && current === AI && !gameOver) {
+      statusEl.textContent = "Bot denkt nach…";
+      setTimeout(botMove, 350);
+    }
   }
 
   document.getElementById("modeOptions").addEventListener("click", e => {
@@ -969,7 +952,7 @@
     gameEl.classList.remove("hidden");
     escBtn.classList.remove("hidden");
     updateLabels();
-    newRound();
+    newMatch();
   }
   function showMenu() {
     clearTimeout(autoRestartTimer);
@@ -2979,7 +2962,7 @@ loop();
     font-size: 15px; font-weight: 700;
   }
   #menuBest { color: var(--accent); font-size: 20px; }
-  .stat.level .num { color: #38bdf8; }
+  .stat.level .num { color: var(--accent); }
 
   .timebar-wrap {
     height: 12px; border-radius: 8px; background: var(--cell);
