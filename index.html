@@ -3551,22 +3551,30 @@ loop();
 
   function chooseDevice(dev) {
     applyDevice(dev);
-    // Wahl fuer den aktuellen Tab merken: ueberlebt einen Reload (F5),
-    // wird aber bei einem NEUEN Aufruf (neuer Tab / frisch geoeffnet) geleert.
-    sessionStorage.setItem(DEVICE_KEY, dev);
+    localStorage.setItem(DEVICE_KEY, dev);   // Wahl merken, um sie bei einem Reload wiederherzustellen
     deviceSelect.classList.add('hidden');
     hub.classList.remove('hidden');
   }
-  document.querySelectorAll('[data-device]').forEach(c =>
+  // Nur die PC/Mobile-Karten im Auswahl-Screen (NICHT <html>, das traegt durch
+  // device.js ebenfalls ein data-device und wuerde sonst mit-selektiert).
+  deviceSelect.querySelectorAll('[data-device]').forEach(c =>
     c.addEventListener('click', () => chooseDevice(c.dataset.device))
   );
 
-  // Beim Reload (gleicher Tab) die vorige Wahl wiederherstellen -> direkt zum Hub,
-  // kein PC/Mobile-Screen. Bei einem neuen Aufruf ist sessionStorage leer ->
-  // die Auswahl erscheint wieder. Der Spielstand liegt im localStorage und bleibt ohnehin.
+  // Wurde die Seite NEU GELADEN (F5 / Pull-to-Refresh) oder per Vor/Zurueck-Taste
+  // aufgerufen? Dann die vorige Wahl wiederherstellen -> direkt zum Hub, kein
+  // PC/Mobile-Screen. Bei einem NEUEN Aufruf (neuer Tab, URL neu eingegeben,
+  // Lesezeichen) erscheint die Auswahl wieder. Spielstand liegt im localStorage.
+  function navigationType() {
+    const nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+    if (nav && nav.type) return nav.type;                                  // 'navigate' | 'reload' | 'back_forward'
+    if (performance.navigation) return performance.navigation.type === 1 ? 'reload' : 'navigate';  // aeltere Browser
+    return 'navigate';
+  }
   (function restoreDevice() {
-    const saved = sessionStorage.getItem(DEVICE_KEY);
-    if (saved === 'pc' || saved === 'mobile') {
+    const saved = localStorage.getItem(DEVICE_KEY);
+    const t = navigationType();
+    if (saved && (t === 'reload' || t === 'back_forward')) {
       applyDevice(saved);
       deviceSelect.classList.add('hidden');
       hub.classList.remove('hidden');
