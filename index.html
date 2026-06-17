@@ -31,8 +31,46 @@
     text-shadow: 0 8px 40px rgba(80,120,255,0.25);
   }
   .tagline { margin-top: 12px; color: #8da0c0; font-size: 16px; letter-spacing: 1px; }
+
+  /* ---------- Suchleiste ---------- */
+  .search {
+    margin-top: 34px;
+    width: 100%; max-width: 760px;
+    position: relative;
+  }
+  .search .ico-search {
+    position: absolute; left: 18px; top: 50%; transform: translateY(-50%);
+    font-size: 18px; color: #8da0c0; pointer-events: none;
+  }
+  #searchInput {
+    width: 100%;
+    padding: 15px 46px 15px 48px;
+    font: inherit; font-size: 17px; color: #e8edf7;
+    background: linear-gradient(180deg, rgba(40,52,80,0.85), rgba(22,30,50,0.85));
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px;
+    outline: none;
+    transition: border-color 0.14s, box-shadow 0.14s;
+    -webkit-user-select: text; user-select: text;
+  }
+  #searchInput::placeholder { color: #6f7f9c; }
+  #searchInput:focus {
+    border-color: rgba(120,160,255,0.6);
+    box-shadow: 0 0 0 3px rgba(80,120,255,0.18);
+  }
+  .search .clear {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    width: 28px; height: 28px; border: none; border-radius: 50%;
+    background: rgba(255,255,255,0.08); color: #c2cee3;
+    font-size: 16px; line-height: 1; cursor: pointer; display: none;
+  }
+  .search .clear:hover { background: rgba(255,255,255,0.16); }
+  .search.has-text .clear { display: block; }
+  .no-results {
+    margin-top: 30px; color: #8da0c0; font-size: 16px; display: none;
+  }
   .cards {
-    margin-top: 48px;
+    margin-top: 28px;
     display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 22px; width: 100%; max-width: 760px;
   }
@@ -94,23 +132,32 @@
     <div class="brand">ZOCKIFY</div>
     <div class="tagline">Wähle dein Spiel</div>
 
+    <div class="search" id="search">
+      <span class="ico-search">🔍</span>
+      <input type="text" id="searchInput" placeholder="Spiel suchen…"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <button class="clear" id="searchClear" title="Suche löschen" aria-label="Suche löschen">✕</button>
+    </div>
+
     <div class="cards">
-      <div class="card ttt" data-game="ttt">
+      <div class="card ttt" data-game="ttt" data-keywords="tic tac toe ttt drei gewinnt kreuz kreis bot freund strategie">
         <div class="ico">⭕❌</div>
         <div class="name">Tic Tac Toe</div>
         <div class="desc">Gegen Freund oder Bot</div>
       </div>
-      <div class="card flappy" data-game="flappy">
+      <div class="card flappy" data-game="flappy" data-keywords="flappy bird vogel fliegen highscore shop skins arcade">
         <div class="ico">🐦</div>
         <div class="name">Flappy Bird</div>
         <div class="desc">Highscore jagen · Shop &amp; Skins</div>
       </div>
-      <div class="card color" data-game="color">
+      <div class="card color" data-game="color" data-keywords="farbsuche farbe farben suche finde unterschied augen reaktion">
         <div class="ico">🎨</div>
         <div class="name">Farbsuche</div>
         <div class="desc">Finde die andere Farbe</div>
       </div>
     </div>
+
+    <div class="no-results" id="noResults">Kein Spiel gefunden 🔍</div>
 
     <div class="footer">Im Spiel jederzeit mit <kbd>Esc</kbd> zurück zur Auswahl · im Menü auch per Button oben links</div>
   </div>
@@ -3555,6 +3602,43 @@ loop();
   document.querySelectorAll('[data-game]').forEach(c =>
     c.addEventListener('click', () => openGame(c.dataset.game))
   );
+
+  // ---------- Spielsuche ----------
+  (function setupSearch() {
+    const search    = document.getElementById('search');
+    const input     = document.getElementById('searchInput');
+    const clearBtn  = document.getElementById('searchClear');
+    const noResults = document.getElementById('noResults');
+    const cards     = [...document.querySelectorAll('.cards [data-game]')];
+
+    function norm(s) { return (s || '').toLowerCase().trim(); }
+
+    function applyFilter() {
+      const q = norm(input.value);
+      search.classList.toggle('has-text', q.length > 0);
+      let visible = 0;
+      cards.forEach(card => {
+        const hay = norm(card.textContent + ' ' + (card.dataset.keywords || ''));
+        const match = q === '' || hay.includes(q);
+        card.style.display = match ? '' : 'none';
+        if (match) visible++;
+      });
+      noResults.style.display = visible === 0 ? 'block' : 'none';
+    }
+
+    input.addEventListener('input', applyFilter);
+    // Enter: wenn genau ein Spiel uebrig bleibt, direkt oeffnen
+    input.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      const shown = cards.filter(c => c.style.display !== 'none');
+      if (shown.length === 1) openGame(shown[0].dataset.game);
+    });
+    clearBtn.addEventListener('click', () => {
+      input.value = '';
+      applyFilter();
+      input.focus();
+    });
+  })();
 
   // ---------- Geraete-Auswahl beim Start (PC oder Mobile) ----------
   const DEVICE_KEY = 'zockifyDevice';
