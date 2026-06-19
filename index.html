@@ -114,46 +114,6 @@
   #player { position: fixed; inset: 0; background: #000; }
   #frame { width: 100%; height: 100%; border: none; display: block; }
 
-  /* ---------- Hub-Admin (Zahnrad + Code) ---------- */
-  .hubgear {
-    position: fixed; bottom: 18px; right: 18px; z-index: 50;
-    width: 46px; height: 46px; border-radius: 50%; border: none; cursor: pointer;
-    background: rgba(255,255,255,0.08); color: #c2cee3; font-size: 20px; line-height: 1;
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14);
-    transition: transform 0.2s, background 0.15s;
-  }
-  .hubgear:hover { background: rgba(255,255,255,0.18); transform: rotate(45deg); }
-  .hubgear.active { background: #22c55e; color: #06310f; box-shadow: 0 0 14px rgba(34,197,94,0.6); }
-  .hub-admin {
-    position: fixed; inset: 0; z-index: 60; padding: 16px;
-    display: flex; align-items: center; justify-content: center;
-    background: rgba(0,0,0,0.6);
-  }
-  .hub-admin-card {
-    width: 100%; max-width: 320px;
-    display: flex; flex-direction: column; gap: 12px;
-    background: linear-gradient(180deg, rgba(40,52,80,0.98), rgba(22,30,50,0.98));
-    border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; padding: 22px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.55);
-  }
-  .hub-admin-card .ha-title { font-size: 18px; font-weight: 800; text-align: center; }
-  .hub-admin-card .ha-msg { font-size: 14px; min-height: 18px; color: #c2cee3; text-align: center; }
-  .hub-admin-card .ha-msg.err { color: #ff7a7a; font-weight: 700; }
-  .hub-admin-card input {
-    width: 100%; padding: 13px; border: none; border-radius: 12px;
-    font: inherit; font-size: 16px; text-align: center;
-    background: rgba(0,0,0,0.35); color: #fff;
-    box-shadow: inset 0 0 0 2px rgba(255,255,255,0.22); outline: none;
-    -webkit-user-select: text; user-select: text;
-  }
-  .hub-admin-card input::placeholder { color: rgba(255,255,255,0.5); }
-  .hub-admin-card .ha-row { display: flex; gap: 10px; }
-  .hub-admin-card .ha-row button {
-    flex: 1; padding: 12px; border: none; border-radius: 12px;
-    font: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
-  }
-  .hub-admin-card #hubAdminOk { background: #38bdf8; color: #06222e; }
-  .hub-admin-card #hubAdminCancel { background: rgba(255,255,255,0.1); color: #e8edf7; }
 </style>
 </head>
 <body>
@@ -212,20 +172,6 @@
     <div class="no-results" id="noResults">Kein Spiel gefunden 🔍</div>
 
     <div class="footer">Im Spiel jederzeit mit <kbd>Esc</kbd> zurück zur Auswahl · im Menü auch per Button oben links</div>
-
-    <!-- Hub-Admin: schaltet in ALLEN Spielen alles frei (Flag 'zockifyAdmin') -->
-    <button class="hubgear" id="hubAdminGear" title="Admin">⚙️</button>
-    <div class="hub-admin hidden" id="hubAdminBox">
-      <div class="hub-admin-card">
-        <div class="ha-title">🔑 Admin</div>
-        <div class="ha-msg" id="hubAdminMsg"></div>
-        <input type="password" id="hubAdminInput" placeholder="Admin-Code" autocomplete="off">
-        <div class="ha-row">
-          <button id="hubAdminOk">OK</button>
-          <button id="hubAdminCancel">Abbrechen</button>
-        </div>
-      </div>
-    </div>
   </div>
 
   <div id="player" class="hidden">
@@ -4886,68 +4832,6 @@ document.getElementById('nameIn').addEventListener('input', e => localStorage.se
     try { sessionStorage.removeItem(GAME_KEY); } catch (_) {}
   }
 
-  // ---------- Hub-Admin: ein Code, alle Spiele alles freigeschaltet ----------
-  // Das Flag liegt im localStorage ('zockifyAdmin'). Die Spiele laufen als
-  // srcdoc-iframes im selben Origin -> sie lesen dasselbe localStorage und
-  // schalten beim Laden alles frei. Hinweis: clientseitig ist der Code nicht
-  // wirklich geheim (im Quelltext lesbar).
-  const HUB_ADMIN_CODE = '1432149admin12';
-  const ADMIN_KEY = 'zockifyAdmin';
-  const hubAdminGear  = document.getElementById('hubAdminGear');
-  const hubAdminBox   = document.getElementById('hubAdminBox');
-  const hubAdminInput = document.getElementById('hubAdminInput');
-  const hubAdminMsg   = document.getElementById('hubAdminMsg');
-  const hubAdminOk    = document.getElementById('hubAdminOk');
-
-  function isAdmin() { return localStorage.getItem(ADMIN_KEY) === '1'; }
-  function refreshAdminGear() { hubAdminGear.classList.toggle('active', isAdmin()); }
-
-  function openHubAdmin() {
-    if (isAdmin()) {
-      hubAdminMsg.textContent = 'Admin ist aktiv – verlassen?';
-      hubAdminMsg.className = 'ha-msg';
-      hubAdminInput.style.display = 'none';
-      hubAdminOk.textContent = 'Verlassen';
-    } else {
-      hubAdminMsg.textContent = '';
-      hubAdminMsg.className = 'ha-msg';
-      hubAdminInput.style.display = '';
-      hubAdminInput.value = '';
-      hubAdminOk.textContent = 'OK';
-    }
-    hubAdminBox.classList.remove('hidden');
-    if (!isAdmin()) hubAdminInput.focus();
-  }
-  function closeHubAdmin() { hubAdminBox.classList.add('hidden'); hubAdminInput.value = ''; }
-  function confirmHubAdmin() {
-    if (isAdmin()) {                                  // aktiv -> verlassen
-      localStorage.removeItem(ADMIN_KEY);
-      refreshAdminGear();
-      closeHubAdmin();
-      return;
-    }
-    if (hubAdminInput.value === HUB_ADMIN_CODE) {     // Code korrekt -> aktivieren
-      localStorage.setItem(ADMIN_KEY, '1');
-      refreshAdminGear();
-      closeHubAdmin();
-    } else {
-      hubAdminMsg.textContent = '❌ Falscher Code.';
-      hubAdminMsg.className = 'ha-msg err';
-      hubAdminInput.value = '';
-      hubAdminInput.focus();
-    }
-  }
-  hubAdminGear.addEventListener('click', openHubAdmin);
-  hubAdminOk.addEventListener('click', confirmHubAdmin);
-  document.getElementById('hubAdminCancel').addEventListener('click', closeHubAdmin);
-  hubAdminBox.addEventListener('click', e => { if (e.target === hubAdminBox) closeHubAdmin(); });
-  hubAdminInput.addEventListener('keydown', e => {
-    e.stopPropagation();
-    if (e.key === 'Enter') confirmHubAdmin();
-    else if (e.key === 'Escape') closeHubAdmin();
-  });
-  refreshAdminGear();
-
   // Ist im Spiel gerade das Spiel-Menue (#menu) offen?
   function gameInMenu() {
     try {
@@ -5118,6 +5002,17 @@ document.getElementById('nameIn').addEventListener('input', e => localStorage.se
     let g = null;
     try { g = sessionStorage.getItem(GAME_KEY); } catch (_) {}
     if (g && TPL[g]) openGame(g);
+  })();
+</script>
+
+<!-- Optionales lokales Admin-Modul (admin.js liegt NICHT im Repo / .gitignore).
+     Fehlt die Datei, gibt es einfach keinen Admin-Button und keinen Code. -->
+<script>
+  (function () {
+    var s = document.createElement('script');
+    s.src = 'admin.js';
+    s.onerror = function () { /* kein Admin-Modul vorhanden -> ignorieren */ };
+    document.body.appendChild(s);
   })();
 </script>
 </body>

@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Slither Klon</title>
+<style>
+  :root { --accent: #10b981; --accent-dark: #0b7a5e; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    background: #0a0f1e;
+    color: #e2e8f0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    user-select: none; -webkit-user-select: none; touch-action: none;
+  }
+  #cv { position: fixed; inset: 0; display: block; cursor: none; }
+
+  /* ---------- Menü ---------- */
+  #menu, #over {
+    position: fixed; inset: 0; z-index: 30;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 20px; padding: 24px; text-align: center;
+    background: radial-gradient(1000px 600px at 50% -10%, #16203a, #0a0f1e);
+  }
+  h1 {
+    font-size: clamp(36px, 10vw, 68px); letter-spacing: 2px; font-weight: 900;
+    background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  body.rainbow h1 {
+    background: linear-gradient(90deg,#f87171,#fb923c,#fbbf24,#34d399,#38bdf8,#a78bfa);
+    -webkit-background-clip: text; background-clip: text;
+  }
+  .sub { color: #94a3b8; font-size: 15px; margin-top: -8px; }
+  input[type=text] {
+    width: min(360px, 80vw); padding: 13px 16px; font-size: 17px; text-align: center;
+    border-radius: 12px; border: 2px solid var(--accent); background: #111a30; color: #e8edf7;
+    outline: none; font-weight: 700; caret-color: var(--accent);
+  }
+  input[type=text]:focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent); }
+  input[type=text]::placeholder { color: #64748b; font-weight: 400; }
+  .label { color: #94a3b8; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; }
+  .diffs { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .diff {
+    padding: 12px 22px; border-radius: 12px; border: 2px solid #334155;
+    background: #111a30; color: #cbd5e1; font-size: 16px; font-weight: 700; cursor: pointer;
+    transition: all .12s; min-width: 110px;
+  }
+  .diff small { display: block; font-weight: 400; font-size: 11px; color: #64748b; margin-top: 3px; }
+  .diff.sel { border-color: var(--dc); color: #fff; box-shadow: 0 0 0 3px color-mix(in srgb, var(--dc) 25%, transparent); }
+  .diff[data-d=easy]   { --dc: #34d399; }
+  .diff[data-d=normal] { --dc: #fbbf24; }
+  .diff[data-d=hard]   { --dc: #fb7185; }
+  .diff[data-d=insane] { --dc: #a855f7; }
+  .botCount { width: min(360px, 80vw); }
+  .botCount .label b { color: var(--accent); font-weight: 700; }
+  .sliderEnds { display: flex; justify-content: space-between; color: #64748b; font-size: 11px; margin-top: 2px; }
+  #botSlider {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 6px; margin-top: 10px;
+    border-radius: 6px; background: #1f2a44; outline: none; cursor: pointer;
+  }
+  #botSlider::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 22px; height: 22px; border-radius: 50%;
+    background: var(--accent); border: 3px solid #04130c; box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 50%, transparent); cursor: pointer;
+  }
+  #botSlider::-moz-range-thumb {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--accent); border: 3px solid #04130c; box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 50%, transparent); cursor: pointer;
+  }
+  button.play {
+    padding: 15px 48px; font-size: 20px; font-weight: 800; cursor: pointer;
+    border: none; border-radius: 14px; color: #04130c;
+    background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+    box-shadow: 0 10px 30px color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+  button.play:active { transform: scale(.97); }
+  .hint { color: #64748b; font-size: 13px; max-width: 420px; line-height: 1.5; }
+  .stat { font-size: 22px; }
+  .stat b { color: var(--accent); }
+  .hidden { display: none !important; }
+
+  /* ---------- Zahnrad + Einstellungen ---------- */
+  .gear-btn {
+    position: fixed; top: 16px; right: 16px; width: 46px; height: 46px;
+    border-radius: 50%; border: none; background: #1e293b; color: #e2e8f0;
+    font-size: 22px; cursor: pointer; z-index: 40;
+    box-shadow: 0 4px 12px rgba(0,0,0,.35); transition: transform .3s, background .15s;
+  }
+  .gear-btn:hover { background: #2b3a52; transform: rotate(60deg); }
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.6);
+    display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px;
+  }
+  .modal {
+    background: #16203a; border: 1px solid #2b3a52; border-radius: 16px;
+    padding: 22px; width: min(400px, 100%);
+  }
+  .modal h2 { margin: 0 0 16px; font-size: 20px; }
+  .group-label { font-size: 13px; letter-spacing: 1px; opacity: .75; font-weight: 700; margin-bottom: 10px; }
+  .swatches { display: flex; gap: 10px; flex-wrap: wrap; }
+  .swatch {
+    width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
+    border: 3px solid transparent; padding: 0; transition: transform .1s;
+  }
+  .swatch:hover { transform: scale(1.12); }
+  .swatch.active { border-color: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,.25); }
+  .swatch.rainbow { background: conic-gradient(#ef4444,#f97316,#eab308,#22c55e,#3b82f6,#6366f1,#a855f7,#ef4444); }
+  .modal .actions { margin-top: 22px; display: flex; justify-content: flex-end; }
+  /* Regenbogen: Buttons bunt, Rest bekommt einen Akzent als Fallback */
+  body.rainbow { --accent: #38bdf8; --accent-dark: #2563eb; }
+  body.rainbow button.play {
+    background: linear-gradient(90deg,#f87171,#fb923c,#fbbf24,#34d399,#38bdf8,#a78bfa);
+    color: #06210f; box-shadow: 0 10px 30px rgba(168,85,247,.35);
+  }
+  body.rainbow button.play.ghost {
+    color: #e2e8f0; border-color: transparent;
+    background:
+      linear-gradient(#1e293b, #1e293b) padding-box,
+      linear-gradient(90deg,#f87171,#fb923c,#fbbf24,#34d399,#38bdf8,#a78bfa) border-box;
+  }
+  /* Regenbogen: auch der Streifen ums Namensfeld wird bunt */
+  body.rainbow input[type=text] {
+    border-color: transparent;
+    background:
+      linear-gradient(#111a30, #111a30) padding-box,
+      linear-gradient(90deg,#f87171,#fb923c,#fbbf24,#34d399,#38bdf8,#a78bfa) border-box;
+  }
+
+  /* ---------- Shop / Münzen ---------- */
+  #coinChip {
+    position: fixed; top: 16px; left: 16px; z-index: 40;
+    background: #1e293b; border-radius: 22px; padding: 8px 16px;
+    font-size: 16px; font-weight: 700; color: #fbbf24;
+    box-shadow: 0 4px 12px rgba(0,0,0,.35);
+  }
+  .menu-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  button.play.ghost {
+    background: #1e293b; color: var(--accent); box-shadow: none; border: 2px solid var(--accent);
+  }
+  .modal.shop { width: min(560px, 100%); }
+  .shop-bal { margin: -6px 0 14px; color: #94a3b8; font-size: 15px; }
+  .shop-bal b { color: #fbbf24; }
+  .skin-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px; max-height: 56vh; overflow-y: auto; padding: 2px;
+  }
+  .skin-card {
+    background: #111a30; border: 2px solid #334155; border-radius: 14px;
+    padding: 12px; text-align: center; cursor: pointer; transition: border-color .12s, transform .1s;
+  }
+  .skin-card:hover { transform: translateY(-2px); }
+  .skin-card.equipped { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent); }
+  .skin-card.locked { opacity: .85; }
+  .skin-preview {
+    height: 46px; border-radius: 23px; margin: 2px 0 10px;
+    box-shadow: inset 0 0 0 3px rgba(0,0,0,.25);
+  }
+  .skin-name { font-weight: 700; font-size: 14px; }
+  .skin-tag { margin-top: 6px; font-size: 13px; font-weight: 700; }
+  .skin-tag.price { color: #fbbf24; }
+  .skin-tag.owned { color: #34d399; }
+  .skin-tag.equipped-tag { color: var(--accent); }
+  .skin-tag.cantafford { color: #fb7185; }
+
+  /* ---------- HUD ---------- */
+  #hud {
+    position: fixed; top: 12px; left: 12px; z-index: 10;
+    font-size: 15px; line-height: 1.5; pointer-events: none;
+    text-shadow: 0 1px 3px rgba(0,0,0,.8);
+  }
+  #hud b { color: #34d399; }
+  #lead {
+    position: fixed; top: 12px; right: 12px; z-index: 10; pointer-events: none;
+    font-size: 13px; text-align: right; text-shadow: 0 1px 3px rgba(0,0,0,.8);
+    min-width: 160px;
+  }
+  #lead .row { display: flex; justify-content: space-between; gap: 10px; opacity: .9; }
+  #lead .me { color: #34d399; font-weight: 700; opacity: 1; }
+  #lead .title { color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+
+  /* Minimap */
+  #mini { position: fixed; bottom: 12px; right: 12px; z-index: 10; border-radius: 50%;
+          border: 2px solid rgba(255,255,255,.15); background: rgba(8,12,24,.55); }
+
+  #boostBtn {
+    position: fixed; bottom: 24px; left: 24px; z-index: 10;
+    width: 84px; height: 84px; border-radius: 50%;
+    background: rgba(16,185,129,.18); border: 2px solid rgba(52,211,153,.6);
+    display: none; align-items: center; justify-content: center;
+    color: #34d399; font-size: 13px; font-weight: 700;
+  }
+  @media (pointer: coarse) { #boostBtn { display: flex; } #cv { cursor: default; } }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+
+<div id="hud" class="hidden">
+  <div>Länge <b id="hLen">10</b></div>
+  <div>Rang <b id="hRank">–</b></div>
+</div>
+<div id="lead" class="hidden">
+  <div class="title">Rangliste</div>
+  <div id="leadList"></div>
+</div>
+<canvas id="mini" class="hidden" width="120" height="120"></canvas>
+<div id="boostBtn">BOOST</div>
+
+<!-- Menü -->
+<div id="menu">
+  <button class="gear-btn" id="gearBtn" title="Einstellungen">⚙</button>
+  <div id="coinChip">💰 <span id="coinBal">0</span></div>
+  <h1>SLITHER</h1>
+  <div class="sub">Friss die Punkte · Werde der Längste · Weiche den Gegnern aus</div>
+  <input type="text" id="nameIn" placeholder="Dein Name" maxlength="14">
+  <div style="margin-top:-8px">
+    <div class="label" style="margin-bottom:10px">Schwierigkeit</div>
+    <div class="diffs" id="diffs">
+      <div class="diff" data-d="easy">Leicht<small>träge Bots</small></div>
+      <div class="diff sel" data-d="normal">Normal<small>fair</small></div>
+      <div class="diff" data-d="hard">Schwer<small>aggressiv</small></div>
+      <div class="diff" data-d="insane">Brutal<small>Profis · Einkreisen</small></div>
+    </div>
+  </div>
+  <div class="botCount">
+    <div class="label">Gegner: <b id="botCountVal">Aus (zufällig)</b></div>
+    <input type="range" id="botSlider" min="14" max="50" value="14" step="1">
+    <div class="sliderEnds"><span>Aus</span><span>50</span></div>
+  </div>
+  <div class="menu-btns">
+    <button class="play" id="playBtn">Spielen</button>
+    <button class="play ghost" id="shopBtn">🛒 Shop</button>
+  </div>
+  <div class="hint">
+    <b>Steuerung:</b> Maus/Finger bewegt die Schlange ·
+    <b>Halten</b> oder <b>Leertaste</b> für Boost (kostet Länge) · <b>Esc</b> beendet die Runde.
+    Renne in andere Schlangen rein, dann zerplatzen sie und du frisst ihre Reste.
+    Deine erreichte Länge gibt es als <b>💰 Punkte</b> für den Shop.
+  </div>
+</div>
+
+<!-- Game Over -->
+<div id="over" class="hidden">
+  <h1 id="overTitle">Game Over</h1>
+  <div class="stat">Länge: <b id="ovLen">0</b></div>
+  <div class="stat" id="ovRankLine">Bester Rang: <b id="ovRank">–</b></div>
+  <div class="stat" id="ovBest" style="font-size:16px;color:#94a3b8;"></div>
+  <div class="stat" id="ovCoins" style="font-size:18px;"></div>
+  <div class="menu-btns">
+    <button class="play" id="againBtn">Nochmal</button>
+    <button class="play ghost" id="overMenuBtn">🏠 Menü</button>
+  </div>
+</div>
+
+<!-- Einstellungen -->
+<div class="modal-overlay hidden" id="settingsModal">
+  <div class="modal">
+    <h2>⚙ Einstellungen</h2>
+    <div class="group-label">Farbe (Knöpfe &amp; Name)</div>
+    <div class="swatches" id="swatches">
+      <button class="swatch active" data-color="#10b981" style="background:#10b981" title="Grün"></button>
+      <button class="swatch" data-color="#ef4444" style="background:#ef4444" title="Rot"></button>
+      <button class="swatch" data-color="#f97316" style="background:#f97316" title="Orange"></button>
+      <button class="swatch" data-color="#eab308" style="background:#eab308" title="Gelb"></button>
+      <button class="swatch" data-color="#3b82f6" style="background:#3b82f6" title="Blau"></button>
+      <button class="swatch" data-color="#6366f1" style="background:#6366f1" title="Indigo"></button>
+      <button class="swatch" data-color="#a855f7" style="background:#a855f7" title="Violett"></button>
+      <button class="swatch rainbow" data-color="rainbow" title="Regenbogen"></button>
+    </div>
+    <div class="actions">
+      <button class="play" id="closeSettings" style="padding:11px 30px;font-size:16px;">Fertig</button>
+    </div>
+  </div>
+</div>
+
+<!-- Shop -->
+<div class="modal-overlay hidden" id="shopModal">
+  <div class="modal shop">
+    <h2>🛒 Skin-Shop</h2>
+    <div class="shop-bal">Guthaben: <b>💰 <span id="shopBal">0</span></b></div>
+    <div class="skin-grid" id="skinGrid"></div>
+    <div class="actions">
+      <button class="play" id="closeShop" style="padding:11px 30px;font-size:16px;">Fertig</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const mini = document.getElementById('mini');
+const mctx = mini.getContext('2d');
+
+let W = 0, H = 0, DPR = 1;
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth; H = window.innerHeight;
+  cv.width = W * DPR; cv.height = H * DPR;
+  cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ---------- Welt-Konstanten ----------
+const WORLD = 4000;            // Radius der runden Welt
+const SEG_SPACING = 4.2;       // Abstand zwischen Pfad-Punkten
+const BASE_SPEED = 2.7;
+const BOOST_SPEED = 5.0;
+const TURN_RATE = 0.16;        // wie schnell der Spieler dreht
+const START_LEN = 10;
+const FOOD_COUNT = 2200;
+
+// hunt = wie stark/oft die Bots aktiv den Spieler jagen (in JEDEM Modus > 0).
+// react/smart/boost = wie gut sie es tun (Vorausschneiden, Genauigkeit, Boost).
+// bigFrac  = Anteil GROSSER Bots (Länge 1000+) – spawnen NUR am Anfang.
+// smartFrac = Anteil SCHLAUER Bots (hoher Skill) – unabhängig von der Größe.
+const DIFF = {
+  easy:   { react: 0.45, smart: 0.20, hunt: 0.35, boost: 0.05, vision: 440, speedMul: 0.94, bigFrac: 0.15, smartFrac: 0.20, label: 'Leicht' },
+  normal: { react: 0.70, smart: 0.50, hunt: 0.60, boost: 0.20, vision: 580, speedMul: 1.0,  bigFrac: 0.30, smartFrac: 0.45, label: 'Normal' },
+  hard:   { react: 0.88, smart: 0.78, hunt: 0.85, boost: 0.45, vision: 720, speedMul: 1.06, bigFrac: 0.49, smartFrac: 0.70, label: 'Schwer' },
+  insane: { react: 0.97, smart: 0.97, hunt: 1.0,  boost: 0.55, vision: 900, speedMul: 1.12, bigFrac: 0.45, smartFrac: 0.80, label: 'Brutal' },
+};
+
+const NAMES = ['Viper','Kira','Zoom','Bolt','Nala','Echo','Rex','Mira','Spike','Fang','Wibble','Nova',
+  'Ghost','Slinky','Dash','Pixel','Toxi','Bandit','Cosmo','Yuki','Loki','Mango','Pepper','Zelda','Onyx','Cleo'];
+
+// ---------- Shop / Skins ----------
+// price = Punkte (= erreichte Länge, die sich über Spiele aufsummiert).
+// rainbow = besonderer, durch alle Farben wandernder Skin.
+// type: solid | gradient | stripes | rainbow | random | palette
+// hue/hue2 = Farben · cols = Farbpalette (Bänder) · glow = leuchtet · dark = abgedunkelt
+const SKINS = [
+  { id: 'green',   name: 'Klassik',         price: 0,    type: 'solid',    hue: 145 },
+  { id: 'random',  name: 'Zufall',          price: 300,  type: 'random' },
+  { id: 'ocean',   name: 'Ozean',           price: 600,  type: 'gradient', hue: 200, hue2: 168, glow: true },
+  { id: 'sunset',  name: 'Sonnenuntergang', price: 900,  type: 'gradient', hue: 330, hue2: 38 },
+  { id: 'toxic',   name: 'Giftschlange',    price: 1000, type: 'stripes',  hue: 90,  hue2: 150 },
+  { id: 'candy',   name: 'Bonbon',          price: 1200, type: 'stripes',  hue: 320, hue2: 190 },
+  { id: 'lava',    name: 'Lava',            price: 1500, type: 'gradient', hue: 2,   hue2: 45, glow: true },
+  { id: 'frost',   name: 'Frost',           price: 1500, type: 'gradient', hue: 185, hue2: 215, glow: true },
+  { id: 'neon',    name: 'Neon-Puls',       price: 2000, type: 'solid',    hue: 312, glow: true },
+  { id: 'gold',    name: 'Gold',            price: 2500, type: 'solid',    hue: 45,  glow: true },
+  { id: 'shadow',  name: 'Schatten',        price: 2500, type: 'solid',    hue: 250, dark: true },
+  { id: 'galaxy',  name: 'Galaxie',         price: 3500, type: 'gradient', hue: 270, hue2: 200, glow: true },
+  { id: 'rainbow', name: 'Regenbogen',      price: 5000, type: 'rainbow',  glow: true },
+  // ----- Design-Skins mit Motiv (Franchise-Themen, eigene Grafik) -----
+  { id: 'vader',  name: 'Darth Vader',  price: 4000, design: 'saber',   bg: '#0a0a0a', deco: '#ff2a2a' },
+  { id: 'luke',   name: 'Jedi · Grün',  price: 4000, design: 'saber',   bg: '#0a0a0a', deco: '#36ff5a' },
+  { id: 'obiwan', name: 'Jedi · Blau',  price: 4000, design: 'saber',   bg: '#0a0a0a', deco: '#3aa0ff' },
+  { id: 'germany',name: 'Deutschland',  price: 3000, type: 'palette',   cols: ['#111111','#dd0000','#ffce00'] },
+  { id: 'spider', name: 'Spider-Man',   price: 3500, design: 'web',     bg: '#d11f2d', deco: '#0a0a16' },
+];
+let coins = parseInt(localStorage.getItem('slitherCoins') || '0', 10);
+let ownedSkins = JSON.parse(localStorage.getItem('slitherOwnedSkins') || '["green"]');
+let selectedSkin = localStorage.getItem('slitherSkin') || 'green';
+function skinById(id) { return SKINS.find(s => s.id === id) || SKINS[0]; }
+function saveShop() {
+  localStorage.setItem('slitherCoins', coins);
+  localStorage.setItem('slitherOwnedSkins', JSON.stringify(ownedSkins));
+  localStorage.setItem('slitherSkin', selectedSkin);
+}
+
+// ---------- Util ----------
+const TAU = Math.PI * 2;
+function rand(a, b) { return a + Math.random() * (b - a); }
+function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+function angLerp(a, b, t) {
+  let d = ((b - a + Math.PI) % TAU) - Math.PI;
+  if (d < -Math.PI) d += TAU;
+  return a + d * t;
+}
+function angDiff(a, b) {
+  let d = ((b - a + Math.PI) % TAU) - Math.PI;
+  if (d < -Math.PI) d += TAU;
+  return d;
+}
+function hsl(h, s, l) { return `hsl(${h},${s}%,${l}%)`; }
+
+// ---------- Spiel-Status ----------
+let snakes = [];
+let foods = [];
+let player = null;
+let diff = DIFF.normal;
+let running = false;
+let camX = 0, camY = 0;
+let bestRank = 99, startLen = START_LEN;
+let bigCount = 4;   // Anzahl GROSSER Gegner (nur am Anfang; in startGame berechnet)
+let smartCount = 4; // Anzahl SCHLAUER Gegner (in startGame berechnet)
+let killCount = 0;
+let runMax = START_LEN; // höchste erreichte Länge dieses Spiels (= Punkte am Ende)
+
+// ---------- Food ----------
+function makeFood(x, y, val, fromDeath) {
+  const r = WORLD * Math.sqrt(Math.random());
+  const a = Math.random() * TAU;
+  return {
+    x: x ?? Math.cos(a) * r,
+    y: y ?? Math.sin(a) * r,
+    val: val ?? rand(1, 2.5),
+    hue: rand(0, 360),
+    fromDeath: !!fromDeath,
+    pulse: Math.random() * TAU,
+  };
+}
+function spawnFoods() {
+  foods = [];
+  for (let i = 0; i < FOOD_COUNT; i++) foods.push(makeFood());
+}
+
+// ---------- Schlange ----------
+// Dicke wächst mit der Länge, aber moderat gedeckelt -> Riesen nicht zu fett.
+function lenToRadius(len) { return 6 + Math.min(26, Math.sqrt(len) * 0.9); }
+// Segmentzahl gedeckelt: sehr lange Schlangen bleiben performant
+// (der Score/len wächst weiter, nur die sichtbare Körperlänge ist begrenzt).
+function lenToSegments(len) { return Math.max(8, Math.min(420, Math.floor(len * 1.3))); }
+
+// Spawn-Position möglichst weit weg von bereits existierenden Schlangen
+// wählen -> alle verteilen sich über die ganze Map.
+function pickSpawnPos() {
+  let bx = 0, by = 0, bestD = -1;
+  for (let t = 0; t < 14; t++) {
+    const a = Math.random() * TAU;
+    const r = WORLD * 0.95 * Math.sqrt(Math.random()); // gleichmäßig über die Fläche
+    const x = Math.cos(a) * r, y = Math.sin(a) * r;
+    let nearest = Infinity;
+    for (const o of snakes) {
+      if (o.dead) continue;
+      const h = headOf(o);
+      const d = Math.hypot(h.x - x, h.y - y);
+      if (d < nearest) nearest = d;
+    }
+    if (nearest > bestD) { bestD = nearest; bx = x; by = y; }
+  }
+  return { x: bx, y: by };
+}
+
+function makeSnake(opt) {
+  const pos = pickSpawnPos();
+  const x = pos.x, y = pos.y;
+  const dir = Math.random() * TAU;
+  const len = opt.len ?? START_LEN;
+  const pts = [];
+  const n = lenToSegments(len);
+  for (let i = 0; i < n; i++) pts.push({ x: x - Math.cos(dir) * i * SEG_SPACING, y: y - Math.sin(dir) * i * SEG_SPACING });
+  return {
+    name: opt.name,
+    isBot: !!opt.isBot,
+    hue: opt.hue ?? rand(0, 360),
+    pts,
+    dir,
+    targetDir: dir,
+    len,
+    speed: BASE_SPEED,
+    boosting: false,
+    dead: false,
+    skinType: opt.skinType || 'solid', // solid | gradient | stripes | rainbow | palette
+    hue2: opt.hue2 ?? (opt.hue ?? 145), // zweite Farbe für Verlauf/Streifen
+    cols: opt.cols || null, // Farbpalette für 'palette'-Skins
+    design: opt.design || null, // gezeichnetes Motiv: saber|soccer|pokeball|web|creeper
+    bg: opt.bg || null,     // Grundfarbe des Design-Skins
+    deco: opt.deco || null, // Akzentfarbe des Motivs
+    glow: !!opt.glow,       // leuchtet
+    dark: !!opt.dark,       // dunkler Skin
+    // Bot-KI
+    skill: clamp(opt.skill ?? 0.6, 0, 1), // 0..1: wie gut der Bot killt
+    juke: (Math.random() < 0.5 ? -1 : 1) * rand(0.5, 0.8), // feste Umkreisungs-Richtung
+    think: 0,
+    goal: null,        // {x,y}
+    mode: 'feed',
+    wanderDir: dir,
+  };
+}
+
+function headOf(s) { return s.pts[0]; }
+
+// Größe + Können eines Bots festlegen. Größe und Schlauheit sind UNABHÄNGIG.
+// big nur, wenn isInitial (Start) UND i < bigCount  -> Große spawnen nur am Anfang.
+// smart (hoher Skill), wenn i < smartCount          -> unabhängig von der Größe.
+// Beim Respawn (isInitial=false) kommt jeder klein zurück und muss durch
+// Kills/Essen wieder wachsen.
+function spawnSpec(i, isInitial) {
+  const big = isInitial && i < bigCount;
+  const smart = i < smartCount;
+  const skill = smart ? clamp(rand(0.85, 1.0), 0, 1) : rand(0.4, 0.65);
+  const len = big ? rand(900, 2200) : rand(10, 70);
+  return { skill, len };
+}
+
+function startGame() {
+  const name = (document.getElementById('nameIn').value || 'Du').trim().slice(0, 14) || 'Du';
+  spawnFoods();
+  snakes = [];
+  const sk = skinById(selectedSkin);
+  const isRandom = sk.type === 'random';
+  const pHue = isRandom ? Math.floor(rand(0, 360)) : (sk.hue ?? 145);
+  player = makeSnake({
+    name, isBot: false, len: START_LEN,
+    hue: pHue, hue2: sk.hue2 ?? pHue, cols: sk.cols,
+    skinType: isRandom ? 'solid' : sk.type, glow: sk.glow, dark: sk.dark,
+    design: sk.design, bg: sk.bg, deco: sk.deco,
+  });
+  snakes.push(player);
+  // Gegner-Anzahl aus dem Slider: 14 = "Aus" -> zufällig 15..35, sonst exakt 15..50
+  const sv = parseInt(document.getElementById('botSlider').value, 10);
+  const botCount = sv <= 14 ? (15 + Math.floor(Math.random() * 21)) : sv;
+  // Anzahl großer + schlauer Gegner skaliert mit der Gesamt-Gegnerzahl
+  bigCount = Math.max(1, Math.round(botCount * diff.bigFrac));
+  smartCount = Math.round(botCount * diff.smartFrac);
+  for (let i = 0; i < botCount; i++) {
+    const b = spawnSpec(i, true);
+    snakes.push(makeSnake({ name: NAMES[i % NAMES.length], isBot: true, len: b.len, skill: b.skill }));
+  }
+  bestRank = 99; killCount = 0; startLen = START_LEN; runMax = START_LEN;
+  running = true;
+  document.getElementById('menu').classList.add('hidden');
+  document.getElementById('over').classList.add('hidden');
+  document.getElementById('hud').classList.remove('hidden');
+  document.getElementById('lead').classList.remove('hidden');
+  mini.classList.remove('hidden');
+  camX = headOf(player).x; camY = headOf(player).y;
+}
+
+// ---------- Eingabe ----------
+let pointerActive = false, pointerX = W / 2, pointerY = H / 2, boostKey = false, boostTouch = false;
+
+cv.addEventListener('mousemove', e => { pointerX = e.clientX; pointerY = e.clientY; pointerActive = true; });
+cv.addEventListener('mousedown', e => { if (e.button === 0) boostTouch = true; });
+window.addEventListener('mouseup', () => boostTouch = false);
+
+cv.addEventListener('touchstart', e => { const t = e.touches[0]; pointerX = t.clientX; pointerY = t.clientY; pointerActive = true; e.preventDefault(); }, { passive: false });
+cv.addEventListener('touchmove', e => { const t = e.touches[0]; pointerX = t.clientX; pointerY = t.clientY; e.preventDefault(); }, { passive: false });
+
+const boostBtn = document.getElementById('boostBtn');
+boostBtn.addEventListener('touchstart', e => { boostTouch = true; e.preventDefault(); }, { passive: false });
+boostBtn.addEventListener('touchend', e => { boostTouch = false; e.preventDefault(); }, { passive: false });
+
+window.addEventListener('keydown', e => {
+  if (e.code === 'Space') { boostKey = true; e.preventDefault(); }
+  if (e.code === 'Escape' && running) endGame('Aufgegeben');
+});
+window.addEventListener('keyup', e => { if (e.code === 'Space') boostKey = false; });
+
+// ---------- Bot-KI ----------
+function botThink(s, dt) {
+  s.think -= dt;
+  const head = headOf(s);
+  const hr = lenToRadius(s.len);
+
+  const sk = s.skill;
+  const visionR = diff.vision;
+  // Können des Bots fließt ein: bessere Bots reagieren sicherer & boosten öfter
+  const react = clamp(diff.react * (0.55 + 0.45 * sk), 0, 1);
+  const boostChance = diff.boost * sk;
+
+  // --- nächste Körper finden: andere Schlangen (Gefahr) + getrennt das Jagdziel ---
+  let danger = null, dDist = Infinity, goalNear = Infinity, goalPt = null;
+  const isHunting = s.mode === 'hunt' && s.goal && !s.goal.dead;
+  for (const o of snakes) {
+    if (o === s || o.dead) continue;
+    const isGoal = isHunting && o === s.goal;
+    const step = Math.max(2, Math.floor(o.pts.length / 30));
+    for (let i = 0; i < o.pts.length; i += step) {
+      const p = o.pts[i];
+      const dx = p.x - head.x, dy = p.y - head.y;
+      const d2 = dx * dx + dy * dy;
+      if (isGoal) { if (d2 < goalNear) { goalNear = d2; goalPt = p; } }
+      else if (d2 < dDist) { dDist = d2; danger = p; }
+    }
+  }
+  dDist = Math.sqrt(dDist);
+  goalNear = Math.sqrt(goalNear);
+
+  // 1) Drohende Kollision mit dem JAGDZIEL -> seitlich abdrehen statt reinfahren.
+  //    Bessere Bots halten größeren Sicherheitsabstand (kein Selbstmord).
+  if (isHunting && goalPt) {
+    const tr = lenToRadius(s.goal.len);
+    const safe = hr + tr + 14 + 40 * sk;
+    if (goalNear < safe) {
+      const away = Math.atan2(head.y - goalPt.y, head.x - goalPt.x);
+      s.targetDir = away + (s.juke || 0.6); // seitlich vorbei -> umkreisen
+      s.boosting = false;
+      s.think = 0.06;
+      return;
+    }
+  }
+
+  // 2) Allgemeine Gefahr (andere Schlangen) ausweichen
+  const fearDist = hr + 80;
+  if (danger && dDist < fearDist && Math.random() < react) {
+    s.targetDir = Math.atan2(head.y - danger.y, head.x - danger.x);
+    s.boosting = boostChance > 0 && dDist < hr + 45 && s.len > 14 && Math.random() < boostChance;
+    s.think = 0.05;
+    return;
+  }
+
+  // Weltrand meiden
+  if (Math.hypot(head.x, head.y) > WORLD - 200) {
+    s.targetDir = Math.atan2(-head.y, -head.x);
+    s.mode = 'feed'; s.goal = null;
+    s.think = 0.1;
+    return;
+  }
+
+  // Modus neu wählen, wenn Denk-Timer abgelaufen
+  if (s.think <= 0) {
+    s.think = rand(0.15, 0.45) * (1.3 - diff.smart);
+    let chosen = null;
+    // Jeden nahen, schwächeren Gegner als Beute werten – egal ob Spieler
+    // oder anderer Bot. So greifen Bots sich auch gegenseitig an und
+    // wirken wie echte Mitspieler. Der Spieler wird leicht bevorzugt.
+    if (Math.random() < diff.hunt) {
+      let bestScore = Infinity;
+      for (const o of snakes) {
+        if (o === s || o.dead) continue;
+        const oh = headOf(o);
+        const d = Math.hypot(oh.x - head.x, oh.y - head.y);
+        const range = (o === player) ? visionR * 1.6 : visionR * 1.3;
+        if (d > range) continue;
+        if (o.len > s.len * 1.15) continue;          // nicht viel Größere jagen
+        const score = d * (o === player ? 0.7 : 1.0); // Spieler etwas bevorzugen
+        if (score < bestScore) { bestScore = score; chosen = o; }
+      }
+    }
+    s.goal = chosen;
+    s.mode = chosen ? 'hunt' : 'feed';
+  }
+
+  // --- Jagd: vor den Kopf des Ziels schneiden ---
+  if (s.mode === 'hunt' && s.goal && !s.goal.dead) {
+    const target = s.goal;
+    const th = headOf(target);
+    const dist = Math.hypot(th.x - head.x, th.y - head.y);
+    // bessere Bots schauen weiter voraus und treffen genauer
+    const lead = 40 + dist * (0.25 + 0.5 * sk);
+    const tx = th.x + Math.cos(target.dir) * lead;
+    const ty = th.y + Math.sin(target.dir) * lead;
+    let aim = Math.atan2(ty - head.y, tx - head.x);
+    aim += (Math.random() - 0.5) * (1 - sk) * 1.4; // Ungenauigkeit bei niedrigem Können
+    s.targetDir = aim;
+    s.boosting = boostChance > 0 && dist < 260 && s.len > 16 && Math.random() < boostChance;
+    return;
+  }
+
+  // --- Feed: nächstes lohnendes Food suchen ---
+  let best = null, bScore = Infinity;
+  for (const f of foods) {
+    const dx = f.x - head.x, dy = f.y - head.y;
+    const d2 = dx * dx + dy * dy;
+    const score = d2 / (f.val * (f.fromDeath ? 3 : 1));
+    if (score < bScore) { bScore = score; best = f; }
+  }
+  if (best) {
+    s.targetDir = Math.atan2(best.y - head.y, best.x - head.x);
+    s.boosting = false;
+  } else {
+    // Wander
+    s.wanderDir += rand(-0.5, 0.5);
+    s.targetDir = s.wanderDir;
+  }
+}
+
+// ---------- Schlange bewegen ----------
+function moveSnake(s, dt) {
+  const head = headOf(s);
+
+  if (s === player) {
+    if (pointerActive) {
+      const wx = camX + (pointerX - W / 2);
+      const wy = camY + (pointerY - H / 2);
+      s.targetDir = Math.atan2(wy - head.y, wx - head.x);
+    }
+    s.boosting = (boostKey || boostTouch) && s.len > 12;
+  }
+
+  // Drehrate begrenzen
+  const turn = s === player ? TURN_RATE : TURN_RATE * 0.85;
+  s.dir = angLerp(s.dir, s.targetDir, turn * (dt * 60));
+
+  // Boost frisst Länge
+  let speed = (s.boosting ? BOOST_SPEED : BASE_SPEED) * diff.speedMul;
+  if (s === player) speed = s.boosting ? BOOST_SPEED : BASE_SPEED; // Spieler immer voll
+  if (s.boosting) {
+    s.len -= 0.04 * (dt * 60);
+    if (s.len <= 10) { s.boosting = false; s.len = Math.max(10, s.len); }
+    // Boost verliert Materie -> Food hinter dem Schwanz
+    if (Math.random() < 0.25) {
+      const tail = s.pts[s.pts.length - 1];
+      foods.push(makeFood(tail.x + rand(-4, 4), tail.y + rand(-4, 4), 1.0, true));
+    }
+  }
+
+  const nx = head.x + Math.cos(s.dir) * speed * (dt * 60);
+  const ny = head.y + Math.sin(s.dir) * speed * (dt * 60);
+
+  // neuen Kopf voranstellen, wenn weit genug
+  const moved = Math.hypot(nx - head.x, ny - head.y);
+  s.pts.unshift({ x: nx, y: ny });
+  // gewünschte Punktanzahl
+  const want = lenToSegments(s.len);
+  while (s.pts.length > want) s.pts.pop();
+  // Pfad glätten: zu dichte Punkte zusammenfassen passiert implizit durch unshift+pop
+}
+
+// ---------- Kollision & Fressen ----------
+function eatFood(s) {
+  const head = headOf(s);
+  const hr = lenToRadius(s.len);
+  const reach = hr + 14;
+  for (let i = foods.length - 1; i >= 0; i--) {
+    const f = foods[i];
+    const dx = f.x - head.x, dy = f.y - head.y;
+    if (dx * dx + dy * dy < reach * reach) {
+      s.len += f.val * 0.6;
+      foods.splice(i, 1);
+      if (!s.isBot || foods.length < FOOD_COUNT) {
+        // Welt aufgefüllt halten
+        if (foods.length < FOOD_COUNT) foods.push(makeFood());
+      }
+    }
+  }
+}
+
+function checkCollisions() {
+  for (const s of snakes) {
+    if (s.dead) continue;
+    const head = headOf(s);
+    const hr = lenToRadius(s.len);
+
+    // Weltrand
+    if (Math.hypot(head.x, head.y) > WORLD) { killSnake(s, null); continue; }
+
+    for (const o of snakes) {
+      if (o === s || o.dead) continue;
+      const or = lenToRadius(o.len);
+      const step = Math.max(2, Math.floor(o.pts.length / 40));
+      for (let i = 2; i < o.pts.length; i += step) {
+        const p = o.pts[i];
+        const dx = p.x - head.x, dy = p.y - head.y;
+        const rr = hr + or - 6;
+        if (dx * dx + dy * dy < rr * rr) {
+          killSnake(s, o);
+          break;
+        }
+      }
+      if (s.dead) break;
+    }
+  }
+}
+
+function killSnake(s, by) {
+  if (s.dead) return;
+  s.dead = true;
+  // Körper in Food verwandeln
+  const step = 2;
+  for (let i = 0; i < s.pts.length; i += step) {
+    const p = s.pts[i];
+    foods.push(makeFood(p.x + rand(-6, 6), p.y + rand(-6, 6), rand(2, 4), true));
+  }
+  if (by && by === player) killCount++;
+
+  if (s === player) {
+    endGame(by ? 'Gefressen' : 'In die Wand gerast');
+  } else {
+    // Bot respawnen, damit die Welt belebt bleibt
+    setTimeout(() => {
+      if (!running) return;
+      const idx = snakes.indexOf(s);
+      if (idx >= 0) { const sp = spawnSpec(idx, false); snakes[idx] = makeSnake({ name: s.name, isBot: true, len: sp.len, skill: sp.skill, hue: rand(0, 360) }); }
+    }, 1500);
+  }
+}
+
+// ---------- Rangliste ----------
+function ranking() {
+  return [...snakes].filter(s => !s.dead).sort((a, b) => b.len - a.len);
+}
+
+// ---------- Game Over ----------
+function endGame(reason) {
+  running = false;
+  player.dead = true;
+  document.getElementById('hud').classList.add('hidden');
+  document.getElementById('lead').classList.add('hidden');
+  mini.classList.add('hidden');
+  // Höchste erreichte Länge dieses Runs = angezeigte Länge UND Shop-Punkte (1:1)
+  const len = Math.floor(runMax);
+  document.getElementById('ovLen').textContent = len;
+  document.getElementById('ovRank').textContent = bestRank === 99 ? '–' : ('#' + bestRank);
+  const best = Math.max(len, parseInt(localStorage.getItem('slitherBest_' + currentDiffKey) || '0', 10));
+  localStorage.setItem('slitherBest_' + currentDiffKey, best);
+  document.getElementById('ovBest').textContent = `Rekord (${diff.label}): ${best}`;
+  // Punkte gutschreiben: genau die Höchstlänge dieses Runs
+  const earned = len;
+  coins += earned;
+  saveShop();
+  refreshCoinUI();
+  document.getElementById('ovCoins').innerHTML = `💰 <b style="color:#fbbf24">+${earned}</b> Punkte · Guthaben: <b style="color:#fbbf24">${coins}</b>`;
+  document.getElementById('overTitle').textContent = reason;
+  document.getElementById('over').classList.remove('hidden');
+}
+
+// Esc: Spiel abbrechen und direkt zurück ins Menü (Punkte werden gutgeschrieben)
+function quitToMenu() {
+  if (!running) return;
+  coins += Math.floor(runMax);
+  saveShop();
+  refreshCoinUI();
+  running = false;
+  player.dead = true;
+  document.getElementById('hud').classList.add('hidden');
+  document.getElementById('lead').classList.add('hidden');
+  mini.classList.add('hidden');
+  document.getElementById('over').classList.add('hidden');
+  document.getElementById('menu').classList.remove('hidden');
+}
+
+// ---------- Zeichnen ----------
+function drawGrid() {
+  const grid = 100;
+  ctx.strokeStyle = 'rgba(255,255,255,0.035)';
+  ctx.lineWidth = 1;
+  const x0 = camX - W / 2, y0 = camY - H / 2;
+  const startX = Math.floor(x0 / grid) * grid;
+  const startY = Math.floor(y0 / grid) * grid;
+  ctx.beginPath();
+  for (let x = startX; x < x0 + W + grid; x += grid) {
+    const sx = x - x0;
+    ctx.moveTo(sx, 0); ctx.lineTo(sx, H);
+  }
+  for (let y = startY; y < y0 + H + grid; y += grid) {
+    const sy = y - y0;
+    ctx.moveTo(0, sy); ctx.lineTo(W, sy);
+  }
+  ctx.stroke();
+}
+
+function drawWorldBorder() {
+  const sx = -camX + W / 2, sy = -camY + H / 2;
+  ctx.beginPath();
+  ctx.arc(sx, sy, WORLD, 0, TAU);
+  ctx.strokeStyle = 'rgba(251,113,133,0.5)';
+  ctx.lineWidth = 6;
+  ctx.stroke();
+  ctx.lineWidth = 20;
+  ctx.strokeStyle = 'rgba(251,113,133,0.08)';
+  ctx.stroke();
+}
+
+function drawFood() {
+  const x0 = camX - W / 2, y0 = camY - H / 2;
+  const t = performance.now() / 600;
+  for (const f of foods) {
+    const sx = f.x - x0, sy = f.y - y0;
+    if (sx < -20 || sx > W + 20 || sy < -20 || sy > H + 20) continue;
+    const r = (f.fromDeath ? 4.5 : 3) + Math.sin(t + f.pulse) * 0.8;
+    ctx.beginPath();
+    ctx.arc(sx, sy, r, 0, TAU);
+    ctx.fillStyle = hsl(f.hue, 85, 60);
+    ctx.shadowColor = hsl(f.hue, 90, 55);
+    ctx.shadowBlur = f.fromDeath ? 12 : 6;
+    ctx.fill();
+  }
+  ctx.shadowBlur = 0;
+}
+
+function drawSnake(s) {
+  const x0 = camX - W / 2, y0 = camY - H / 2;
+  const r = lenToRadius(s.len);
+  const n = s.pts.length;
+  const head = headOf(s);
+  const hsx = head.x - x0, hsy = head.y - y0;
+
+  // Hue je Segment (0 = Kopf): erzeugt die Muster
+  const phase = performance.now() / 22;
+  function hueAt(i) {
+    switch (s.skinType) {
+      case 'rainbow':  return i * 5 - phase * 5;
+      case 'gradient': return s.hue + (s.hue2 - s.hue) * (i / Math.max(1, n - 1));
+      case 'stripes':  return (Math.floor(i / 5) % 2 === 0) ? s.hue : s.hue2;
+      default:         return s.hue;
+    }
+  }
+  // Farbe: normalisiert Hue, dunkler Skin wird abgedunkelt/entsättigt
+  const col = (h, light) => hsl(((h % 360) + 360) % 360, s.dark ? 30 : 82, light * (s.dark ? 0.42 : 1));
+  const isPal = s.skinType === 'palette' && s.cols && s.cols.length;
+  // Körperfarbe je Segment (Palette = feste Farbbänder, sonst Hue-basiert)
+  const bodyColor = (i) => isPal ? s.cols[Math.floor(i / 7) % s.cols.length] : col(hueAt(i), s.boosting ? 60 : 50);
+  const headCol = isPal ? s.cols[0] : col(hueAt(0), 52);
+  const glowCol = isPal ? s.cols[0] : col(hueAt(0), 60);
+  const fancy = isPal || s.skinType === 'gradient' || s.skinType === 'stripes' || s.skinType === 'rainbow';
+
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  // Design-Skins (Lichtschwert, Pokéball, …) eigener Render-Pfad
+  if (s.design) { drawDesigned(s, x0, y0, r, n, hsx, hsy); return; }
+
+  // Kontur (eine dunkle, dicke Linie)
+  ctx.beginPath();
+  let first = true;
+  for (let i = n - 1; i >= 0; i--) {
+    const p = s.pts[i];
+    if (first) { ctx.moveTo(p.x - x0, p.y - y0); first = false; } else ctx.lineTo(p.x - x0, p.y - y0);
+  }
+  ctx.strokeStyle = (s.dark || isPal) ? 'rgba(0,0,0,0.5)' : col(s.hue, 22);
+  ctx.lineWidth = r * 2 + 4;
+  ctx.stroke();
+
+  if (!fancy) {
+    // einfarbig: schnelle Einzel-Linie + Glanz
+    ctx.strokeStyle = col(s.hue, s.boosting ? 65 : 52);
+    ctx.lineWidth = r * 2;
+    ctx.stroke();
+    ctx.strokeStyle = col(s.hue, 72);
+    ctx.lineWidth = Math.max(2, r * 0.5);
+    ctx.globalAlpha = 0.35; ctx.stroke(); ctx.globalAlpha = 1;
+  } else {
+    // gemustert: Segment für Segment (nur Spieler -> günstig)
+    for (let i = n - 1; i >= 1; i--) {
+      const p = s.pts[i], q = s.pts[i - 1];
+      ctx.beginPath();
+      ctx.moveTo(p.x - x0, p.y - y0);
+      ctx.lineTo(q.x - x0, q.y - y0);
+      ctx.strokeStyle = bodyColor(i);
+      ctx.lineWidth = r * 2;
+      ctx.stroke();
+    }
+  }
+
+  // Leuchten: Glow-Skins und Boost
+  if (s.glow || s.boosting) {
+    ctx.save();
+    ctx.shadowColor = glowCol;
+    ctx.shadowBlur = s.boosting ? 22 : 15;
+    ctx.strokeStyle = glowCol;
+    ctx.lineWidth = r * 2;
+    ctx.globalAlpha = s.boosting ? 0.3 : 0.18;
+    ctx.beginPath();
+    first = true;
+    for (let i = n - 1; i >= 0; i--) {
+      const p = s.pts[i];
+      if (first) { ctx.moveTo(p.x - x0, p.y - y0); first = false; } else ctx.lineTo(p.x - x0, p.y - y0);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Kopf
+  ctx.beginPath();
+  ctx.arc(hsx, hsy, r, 0, TAU);
+  ctx.fillStyle = headCol;
+  ctx.fill();
+  // Augen
+  const ex = Math.cos(s.dir), ey = Math.sin(s.dir);
+  const perpx = -ey, perpy = ex;
+  const eo = r * 0.5, eb = r * 0.4;
+  for (const side of [-1, 1]) {
+    const exr = hsx + ex * r * 0.45 + perpx * eo * side;
+    const eyr = hsy + ey * r * 0.45 + perpy * eo * side;
+    ctx.beginPath(); ctx.arc(exr, eyr, eb, 0, TAU);
+    ctx.fillStyle = '#fff'; ctx.fill();
+    ctx.beginPath(); ctx.arc(exr + ex * eb * 0.4, eyr + ey * eb * 0.4, eb * 0.5, 0, TAU);
+    ctx.fillStyle = '#0a0f1e'; ctx.fill();
+  }
+
+  // Name
+  if (s !== player) {
+    ctx.font = '600 12px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255,255,255,0.65)';
+    ctx.fillText(s.name, hsx, hsy - r - 6);
+  }
+}
+
+// Design-Skins mit echtem Motiv (z. B. leuchtendes Lichtschwert)
+function drawDesigned(s, x0, y0, r, n, hsx, hsy) {
+  const trace = () => {
+    ctx.beginPath();
+    let f = true;
+    for (let i = n - 1; i >= 0; i--) {
+      const p = s.pts[i], px = p.x - x0, py = p.y - y0;
+      if (f) { ctx.moveTo(px, py); f = false; } else ctx.lineTo(px, py);
+    }
+  };
+  const seg = (i) => ({ x: s.pts[i].x - x0, y: s.pts[i].y - y0 });
+  const D = s.design;
+
+  // Kontur + Grundkörper
+  trace(); ctx.strokeStyle = 'rgba(0,0,0,0.55)'; ctx.lineWidth = r * 2 + 4; ctx.stroke();
+  trace(); ctx.strokeStyle = s.bg; ctx.lineWidth = r * 2; ctx.stroke();
+
+  if (D === 'saber') {
+    // leuchtendes Lichtschwert: farbiger Glow + weißer Innenkern
+    ctx.save();
+    ctx.shadowColor = s.deco; ctx.shadowBlur = 28;
+    ctx.strokeStyle = s.deco; ctx.lineWidth = Math.max(3, r * 0.8); ctx.globalAlpha = 0.95;
+    trace(); ctx.stroke();
+    ctx.shadowBlur = 12; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(1.5, r * 0.34);
+    trace(); ctx.stroke();
+    ctx.restore();
+  } else if (D === 'soccer') {
+    // schwarze Fünfeck-Flecken (Fußball)
+    ctx.fillStyle = s.deco;
+    for (let i = n - 3; i >= 2; i -= 9) {
+      const p = seg(i);
+      ctx.beginPath();
+      for (let k = 0; k < 5; k++) {
+        const a = i * 0.3 + k * TAU / 5;
+        const x = p.x + Math.cos(a) * r * 0.58, y = p.y + Math.sin(a) * r * 0.58;
+        if (k === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.closePath(); ctx.fill();
+    }
+  } else if (D === 'pokeball') {
+    // weiße Knöpfe mit schwarzem Ring (Pokéball)
+    for (let i = n - 3; i >= 2; i -= 8) {
+      const p = seg(i);
+      ctx.beginPath(); ctx.arc(p.x, p.y, r * 0.55, 0, TAU); ctx.fillStyle = '#111'; ctx.fill();
+      ctx.beginPath(); ctx.arc(p.x, p.y, r * 0.36, 0, TAU); ctx.fillStyle = s.deco; ctx.fill();
+    }
+  } else if (D === 'web') {
+    // schwarze Quer-Rippen + Längslinie (Spinnennetz)
+    ctx.strokeStyle = s.deco; ctx.lineWidth = Math.max(1.5, r * 0.2);
+    for (let i = n - 2; i >= 1; i -= 3) {
+      const a = s.pts[i], b = s.pts[i - 1];
+      const dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy) || 1;
+      const nx = -dy / L, ny = dx / L, cx = a.x - x0, cy = a.y - y0;
+      ctx.beginPath();
+      ctx.moveTo(cx - nx * r * 0.85, cy - ny * r * 0.85);
+      ctx.lineTo(cx + nx * r * 0.85, cy + ny * r * 0.85);
+      ctx.stroke();
+    }
+    trace(); ctx.lineWidth = Math.max(1.5, r * 0.16); ctx.stroke();
+  }
+
+  // Boost-Glow (saber leuchtet ohnehin)
+  if (s.boosting && D !== 'saber') {
+    ctx.save();
+    ctx.shadowColor = s.deco; ctx.shadowBlur = 20; ctx.strokeStyle = s.deco;
+    ctx.lineWidth = r * 2; ctx.globalAlpha = 0.25; trace(); ctx.stroke(); ctx.restore();
+  }
+
+  // Kopf
+  ctx.beginPath(); ctx.arc(hsx, hsy, r, 0, TAU); ctx.fillStyle = s.bg; ctx.fill();
+
+  if (D === 'creeper') {
+    // Creeper-Gesicht
+    const u = r * 0.34;
+    ctx.fillStyle = s.deco;
+    ctx.fillRect(hsx - r * 0.58, hsy - r * 0.45, u, u);
+    ctx.fillRect(hsx + r * 0.58 - u, hsy - r * 0.45, u, u);
+    ctx.fillRect(hsx - u * 0.5, hsy - r * 0.02, u, r * 0.72);
+    ctx.fillRect(hsx - r * 0.5, hsy + r * 0.38, u, u);
+    ctx.fillRect(hsx + r * 0.5 - u, hsy + r * 0.38, u, u);
+  } else {
+    // Augen
+    const ex = Math.cos(s.dir), ey = Math.sin(s.dir);
+    const perpx = -ey, perpy = ex, eo = r * 0.5, eb = r * 0.4;
+    for (const side of [-1, 1]) {
+      const exr = hsx + ex * r * 0.45 + perpx * eo * side;
+      const eyr = hsy + ey * r * 0.45 + perpy * eo * side;
+      ctx.beginPath(); ctx.arc(exr, eyr, eb, 0, TAU); ctx.fillStyle = '#fff'; ctx.fill();
+      ctx.beginPath(); ctx.arc(exr + ex * eb * 0.4, eyr + ey * eb * 0.4, eb * 0.5, 0, TAU);
+      ctx.fillStyle = '#0a0f1e'; ctx.fill();
+    }
+  }
+}
+
+// leuchtender weißer Punkt an der Mausposition
+function drawCursor() {
+  if (!pointerActive) return;
+  const t = performance.now() / 400;
+  const pulse = 1 + Math.sin(t) * 0.15;
+  ctx.save();
+  // weicher Glow
+  const grad = ctx.createRadialGradient(pointerX, pointerY, 0, pointerX, pointerY, 16 * pulse);
+  grad.addColorStop(0, 'rgba(255,255,255,0.9)');
+  grad.addColorStop(0.4, 'rgba(190,255,240,0.35)');
+  grad.addColorStop(1, 'rgba(190,255,240,0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath(); ctx.arc(pointerX, pointerY, 16 * pulse, 0, TAU); ctx.fill();
+  // heller Kern
+  ctx.shadowColor = 'rgba(255,255,255,0.9)';
+  ctx.shadowBlur = 10;
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath(); ctx.arc(pointerX, pointerY, 3.2, 0, TAU); ctx.fill();
+  ctx.restore();
+}
+
+function drawMini() {
+  const R = 60, cx = 60, cy = 60;
+  mctx.clearRect(0, 0, 120, 120);
+  mctx.beginPath(); mctx.arc(cx, cy, R, 0, TAU);
+  mctx.fillStyle = 'rgba(10,15,30,0.6)'; mctx.fill();
+  const sc = R / WORLD;
+  for (const s of snakes) {
+    if (s.dead) continue;
+    const h = headOf(s);
+    const mx = cx + h.x * sc, my = cy + h.y * sc;
+    mctx.beginPath();
+    mctx.arc(mx, my, s === player ? 3 : 1.6, 0, TAU);
+    mctx.fillStyle = s === player ? '#34d399' : hsl(s.hue, 70, 55);
+    mctx.fill();
+  }
+  mctx.beginPath(); mctx.arc(cx, cy, R, 0, TAU);
+  mctx.strokeStyle = 'rgba(251,113,133,0.4)'; mctx.lineWidth = 2; mctx.stroke();
+}
+
+function updateHUD() {
+  const rank = ranking();
+  const myRank = rank.indexOf(player) + 1;
+  if (myRank > 0 && myRank < bestRank) bestRank = myRank;
+  document.getElementById('hLen').textContent = Math.floor(player.len);
+  document.getElementById('hRank').textContent = myRank > 0 ? ('#' + myRank + ' / ' + rank.length) : '–';
+
+  let html = '';
+  const top = rank.slice(0, 8);
+  top.forEach((s, i) => {
+    const me = s === player ? ' me' : '';
+    const nm = s === player ? (s.name + ' (Du)') : s.name;
+    html += `<div class="row${me}"><span>${i + 1}. ${nm}</span><span>${Math.floor(s.len)}</span></div>`;
+  });
+  if (myRank > 8) {
+    html += `<div class="row me"><span>${myRank}. ${player.name} (Du)</span><span>${Math.floor(player.len)}</span></div>`;
+  }
+  document.getElementById('leadList').innerHTML = html;
+}
+
+// ---------- Hauptschleife ----------
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min(0.05, (now - last) / 1000) * 60 / 60; // dt in Sekunden, gedeckelt
+  const dtN = clamp((now - last) / 1000, 0, 0.05);
+  last = now;
+
+  ctx.clearRect(0, 0, W, H);
+
+  if (running) {
+    // Update
+    for (const s of snakes) {
+      if (s.dead) continue;
+      if (s.isBot) botThink(s, dtN);
+      moveSnake(s, dtN);
+      eatFood(s);
+    }
+    checkCollisions();
+
+    // Kamera folgt Spieler weich
+    if (!player.dead) {
+      const h = headOf(player);
+      camX += (h.x - camX) * 0.12;
+      camY += (h.y - camY) * 0.12;
+      if (player.len > runMax) runMax = player.len; // höchste Länge = Punkte
+    }
+    updateHUD();
+  }
+
+  // Render
+  drawGrid();
+  drawWorldBorder();
+  drawFood();
+  // tote nicht zeichnen; sortiere damit Spieler oben? Spieler zuletzt zeichnen
+  for (const s of snakes) if (!s.dead && s !== player) drawSnake(s);
+  if (player && !player.dead) drawSnake(player);
+  if (running) { drawMini(); drawCursor(); }
+
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// ---------- Menü-Logik ----------
+let currentDiffKey = 'normal';
+document.getElementById('diffs').addEventListener('click', e => {
+  const el = e.target.closest('.diff');
+  if (!el) return;
+  document.querySelectorAll('.diff').forEach(d => d.classList.remove('sel'));
+  el.classList.add('sel');
+  currentDiffKey = el.dataset.d;
+  diff = DIFF[currentDiffKey];
+});
+document.getElementById('playBtn').addEventListener('click', () => { diff = DIFF[currentDiffKey]; startGame(); });
+document.getElementById('againBtn').addEventListener('click', () => {
+  document.getElementById('over').classList.add('hidden');
+  startGame();
+});
+document.getElementById('overMenuBtn').addEventListener('click', () => {
+  document.getElementById('over').classList.add('hidden');
+  document.getElementById('menu').classList.remove('hidden');
+});
+
+// Gegner-Slider
+const botSlider = document.getElementById('botSlider');
+const botCountVal = document.getElementById('botCountVal');
+function updateBotLabel() {
+  const v = parseInt(botSlider.value, 10);
+  botCountVal.textContent = v <= 14 ? 'Aus (zufällig 15–35)' : v;
+  localStorage.setItem('slitherBots', v);
+}
+const savedBots = localStorage.getItem('slitherBots');
+if (savedBots !== null) botSlider.value = savedBots;
+botSlider.addEventListener('input', updateBotLabel);
+updateBotLabel();
+
+// ---------- Shop ----------
+const shopModal = document.getElementById('shopModal');
+const skinGrid = document.getElementById('skinGrid');
+const coinBalEl = document.getElementById('coinBal');
+const shopBalEl = document.getElementById('shopBal');
+
+function refreshCoinUI() {
+  coinBalEl.textContent = coins;
+  shopBalEl.textContent = coins;
+}
+
+function skinPreviewBg(sk) {
+  if (sk.design) {
+    const d = sk.deco;
+    switch (sk.design) {
+      case 'saber':    return `linear-gradient(0deg, ${sk.bg} 0 38%, #fff 45%, ${d} 50%, #fff 55%, ${sk.bg} 62%)`;
+      case 'soccer':   return `radial-gradient(circle at 30% 50%, ${d} 0 16%, transparent 17%), radial-gradient(circle at 72% 50%, ${d} 0 16%, transparent 17%), ${sk.bg}`;
+      case 'pokeball': return `radial-gradient(circle at 50% 50%, #fff 0 20%, #111 21% 30%, transparent 31%), ${sk.bg}`;
+      case 'web':      return `repeating-linear-gradient(90deg, transparent 0 11px, ${d} 11px 13px), ${sk.bg}`;
+      case 'creeper':  return `radial-gradient(circle at 35% 42%, ${d} 0 14%, transparent 15%), radial-gradient(circle at 65% 42%, ${d} 0 14%, transparent 15%), ${sk.bg}`;
+      default:         return sk.bg;
+    }
+  }
+  switch (sk.type) {
+    case 'rainbow':  return 'linear-gradient(90deg,#f87171,#fb923c,#fbbf24,#34d399,#38bdf8,#a78bfa)';
+    case 'random':   return 'conic-gradient(#f87171,#fbbf24,#34d399,#38bdf8,#a78bfa,#f472b6,#f87171)';
+    case 'gradient': return `linear-gradient(90deg, hsl(${sk.hue},85%,56%), hsl(${sk.hue2},85%,50%))`;
+    case 'stripes':  return `repeating-linear-gradient(45deg, hsl(${sk.hue},85%,55%) 0 10px, hsl(${sk.hue2},85%,52%) 10px 20px)`;
+    case 'palette': {
+      const w = 12, stops = sk.cols.map((c, i) => `${c} ${i * w}px ${(i + 1) * w}px`).join(',');
+      return `repeating-linear-gradient(45deg, ${stops})`;
+    }
+    default:
+      if (sk.dark) return `linear-gradient(180deg, hsl(${sk.hue},32%,30%), hsl(${sk.hue},32%,13%))`;
+      return `linear-gradient(180deg, hsl(${sk.hue},85%,60%), hsl(${sk.hue},80%,42%))`;
+  }
+}
+
+function buildShop() {
+  skinGrid.innerHTML = '';
+  for (const sk of SKINS) {
+    const owned = ownedSkins.includes(sk.id);
+    const equipped = selectedSkin === sk.id;
+    const card = document.createElement('div');
+    card.className = 'skin-card' + (equipped ? ' equipped' : '') + (owned ? '' : ' locked');
+
+    const prev = document.createElement('div');
+    prev.className = 'skin-preview';
+    prev.style.background = skinPreviewBg(sk);
+    if (sk.glow || sk.design === 'saber') {
+      const gc = sk.type === 'rainbow' ? '#a78bfa' : sk.deco ? sk.deco : sk.cols ? sk.cols[0] : `hsl(${sk.hue ?? 280},90%,58%)`;
+      prev.style.boxShadow = `0 0 16px ${gc}`;
+    }
+    card.appendChild(prev);
+
+    const nm = document.createElement('div');
+    nm.className = 'skin-name';
+    nm.textContent = sk.name;
+    card.appendChild(nm);
+
+    const tag = document.createElement('div');
+    tag.className = 'skin-tag';
+    if (equipped)             { tag.classList.add('equipped-tag'); tag.textContent = '✓ Aktiv'; }
+    else if (owned)           { tag.classList.add('owned');        tag.textContent = 'Auswählen'; }
+    else if (coins >= sk.price){ tag.classList.add('price');       tag.textContent = '💰 ' + sk.price + ' · Kaufen'; }
+    else                      { tag.classList.add('cantafford');   tag.textContent = '💰 ' + sk.price; }
+    card.appendChild(tag);
+
+    card.addEventListener('click', () => onSkinClick(sk));
+    skinGrid.appendChild(card);
+  }
+}
+
+function onSkinClick(sk) {
+  const owned = ownedSkins.includes(sk.id);
+  if (owned) {
+    selectedSkin = sk.id;                 // bereits gekauft -> ausrüsten
+  } else if (coins >= sk.price) {
+    coins -= sk.price;                    // kaufen
+    ownedSkins.push(sk.id);
+    selectedSkin = sk.id;                 // und direkt ausrüsten
+  } else {
+    return;                               // zu wenig Punkte
+  }
+  saveShop();
+  refreshCoinUI();
+  buildShop();
+}
+
+function openShop() { buildShop(); refreshCoinUI(); shopModal.classList.remove('hidden'); }
+document.getElementById('shopBtn').addEventListener('click', openShop);
+document.getElementById('closeShop').addEventListener('click', () => shopModal.classList.add('hidden'));
+shopModal.addEventListener('click', e => { if (e.target === shopModal) shopModal.classList.add('hidden'); });
+window.addEventListener('keydown', e => {
+  if (e.code === 'Escape' && !shopModal.classList.contains('hidden')) shopModal.classList.add('hidden');
+});
+refreshCoinUI();
+
+// ---------- Einstellungen / Farbe ----------
+// Wirkt nur auf Menü & Knöpfe (--accent), NICHT auf das Spielgeschehen.
+const settingsModal = document.getElementById('settingsModal');
+const gearBtn = document.getElementById('gearBtn');
+
+function darken(hex, f) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = Math.round(((n >> 16) & 255) * f);
+  const g = Math.round(((n >> 8) & 255) * f);
+  const b = Math.round((n & 255) * f);
+  return '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
+}
+
+function applyAccent(color) {
+  document.querySelectorAll('#swatches .swatch').forEach(s => s.classList.toggle('active', s.dataset.color === color));
+  if (color === 'rainbow') {
+    document.body.classList.add('rainbow');
+  } else {
+    document.body.classList.remove('rainbow');
+    document.documentElement.style.setProperty('--accent', color);
+    document.documentElement.style.setProperty('--accent-dark', darken(color, 0.7));
+  }
+  localStorage.setItem('slitherAccent', color);
+}
+
+gearBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
+document.getElementById('closeSettings').addEventListener('click', () => settingsModal.classList.add('hidden'));
+settingsModal.addEventListener('click', e => { if (e.target === settingsModal) settingsModal.classList.add('hidden'); });
+document.getElementById('swatches').addEventListener('click', e => {
+  const btn = e.target.closest('.swatch');
+  if (btn) applyAccent(btn.dataset.color);
+});
+applyAccent(localStorage.getItem('slitherAccent') || '#10b981');
+
+// Esc schließt das Einstellungs-Fenster
+window.addEventListener('keydown', e => {
+  if (e.code === 'Escape' && !settingsModal.classList.contains('hidden')) {
+    settingsModal.classList.add('hidden');
+  }
+});
+
+// Name merken
+const savedName = localStorage.getItem('slitherName');
+if (savedName) document.getElementById('nameIn').value = savedName;
+document.getElementById('nameIn').addEventListener('input', e => localStorage.setItem('slitherName', e.target.value));
+</script>
+</body>
+</html>
