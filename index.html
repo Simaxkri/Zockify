@@ -113,6 +113,47 @@
   .hidden { display: none !important; }
   #player { position: fixed; inset: 0; background: #000; }
   #frame { width: 100%; height: 100%; border: none; display: block; }
+
+  /* ---------- Hub-Admin (Zahnrad + Code) ---------- */
+  .hubgear {
+    position: fixed; bottom: 18px; right: 18px; z-index: 50;
+    width: 46px; height: 46px; border-radius: 50%; border: none; cursor: pointer;
+    background: rgba(255,255,255,0.08); color: #c2cee3; font-size: 20px; line-height: 1;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14);
+    transition: transform 0.2s, background 0.15s;
+  }
+  .hubgear:hover { background: rgba(255,255,255,0.18); transform: rotate(45deg); }
+  .hubgear.active { background: #22c55e; color: #06310f; box-shadow: 0 0 14px rgba(34,197,94,0.6); }
+  .hub-admin {
+    position: fixed; inset: 0; z-index: 60; padding: 16px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.6);
+  }
+  .hub-admin-card {
+    width: 100%; max-width: 320px;
+    display: flex; flex-direction: column; gap: 12px;
+    background: linear-gradient(180deg, rgba(40,52,80,0.98), rgba(22,30,50,0.98));
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; padding: 22px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+  }
+  .hub-admin-card .ha-title { font-size: 18px; font-weight: 800; text-align: center; }
+  .hub-admin-card .ha-msg { font-size: 14px; min-height: 18px; color: #c2cee3; text-align: center; }
+  .hub-admin-card .ha-msg.err { color: #ff7a7a; font-weight: 700; }
+  .hub-admin-card input {
+    width: 100%; padding: 13px; border: none; border-radius: 12px;
+    font: inherit; font-size: 16px; text-align: center;
+    background: rgba(0,0,0,0.35); color: #fff;
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,0.22); outline: none;
+    -webkit-user-select: text; user-select: text;
+  }
+  .hub-admin-card input::placeholder { color: rgba(255,255,255,0.5); }
+  .hub-admin-card .ha-row { display: flex; gap: 10px; }
+  .hub-admin-card .ha-row button {
+    flex: 1; padding: 12px; border: none; border-radius: 12px;
+    font: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
+  }
+  .hub-admin-card #hubAdminOk { background: #38bdf8; color: #06222e; }
+  .hub-admin-card #hubAdminCancel { background: rgba(255,255,255,0.1); color: #e8edf7; }
 </style>
 </head>
 <body>
@@ -162,7 +203,7 @@
         <div class="desc">Finde die andere Farbe</div>
       </div>
       <div class="card slither" data-game="slither" data-keywords="slither io schlange snake wurm fressen wachsen bots multiplayer arcade">
-        <div class="ico">🐍</div>
+        <div class="ico"><img src="images/slither.png" alt="Slither"></div>
         <div class="name">Slither</div>
         <div class="desc">Friss, wachse, überlebe</div>
       </div>
@@ -171,6 +212,20 @@
     <div class="no-results" id="noResults">Kein Spiel gefunden 🔍</div>
 
     <div class="footer">Im Spiel jederzeit mit <kbd>Esc</kbd> zurück zur Auswahl · im Menü auch per Button oben links</div>
+
+    <!-- Hub-Admin: schaltet in ALLEN Spielen alles frei (Flag 'zockifyAdmin') -->
+    <button class="hubgear" id="hubAdminGear" title="Admin">⚙️</button>
+    <div class="hub-admin hidden" id="hubAdminBox">
+      <div class="hub-admin-card">
+        <div class="ha-title">🔑 Admin</div>
+        <div class="ha-msg" id="hubAdminMsg"></div>
+        <input type="password" id="hubAdminInput" placeholder="Admin-Code" autocomplete="off">
+        <div class="ha-row">
+          <button id="hubAdminOk">OK</button>
+          <button id="hubAdminCancel">Abbrechen</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div id="player" class="hidden">
@@ -1291,7 +1346,6 @@
     transition: transform 0.2s, background 0.12s;
   }
   .gear:hover { background: rgba(255,255,255,0.24); transform: rotate(45deg); }
-  .gear.admin { background: var(--accent); color: #2a2207; box-shadow: 0 0 10px var(--accent); }
 
   /* Einstellungen */
   #settings { gap: 12px; }
@@ -1322,22 +1376,7 @@
   }
   .arrow:disabled:active { transform: none; }
 
-  /* Admin-Code-Eingabe (im Spiel, kein Browser-Dialog) */
   .hidden { display: none !important; }
-  .admincode {
-    display: flex; flex-direction: column; gap: 10px;
-    width: 100%; max-width: 260px; align-items: stretch;
-  }
-  .admincode input {
-    width: 100%; padding: 12px 14px; border: none; border-radius: 10px;
-    font-size: 16px; font-weight: 700; text-align: center;
-    background: rgba(0,0,0,0.3); color: #fff;
-    box-shadow: inset 0 0 0 2px rgba(255,255,255,0.25);
-  }
-  .admincode input::placeholder { color: rgba(255,255,255,0.5); font-weight: 600; }
-  .admincode .row .btn { width: 120px; }
-  .adminmsg { font-size: 13px; min-height: 16px; opacity: 0.85; }
-  .adminmsg.err { color: #ff7a7a; opacity: 1; font-weight: 700; }
 
   /* Knopffarbe-Wähler (1:1 wie Tic-Tac-Toe) */
   .group-label { font-size: 13px; letter-spacing: 1px; opacity: 0.75; font-weight: 700; }
@@ -1413,7 +1452,7 @@
 
     <!-- Hauptmenü -->
     <div class="overlay" id="menu">
-      <button class="gear" id="adminGear" title="Admin">⚙️</button>
+      <button class="gear" id="settingsGear" title="Einstellungen">⚙️</button>
       <div class="besthero">
         <div class="label">HIGHSCORE</div>
         <div class="value" id="menuBest">0</div>
@@ -1470,15 +1509,6 @@
         <button class="swatch rainbow" data-color="rainbow" title="Regenbogen"></button>
         <button class="swatch transparent" data-color="transparent" title="Transparent"></button>
       </div>
-      <button class="btn ghost" id="adminBtn">🔑 Admin</button>
-      <div class="admincode" id="adminBox" style="display:none">
-        <div class="adminmsg" id="adminMsg"></div>
-        <input type="password" id="adminInput" placeholder="Admin-Code" autocomplete="off" inputmode="text">
-        <div class="row">
-          <button class="btn" id="adminOk">OK</button>
-          <button class="btn ghost" id="adminCancel">Abbrechen</button>
-        </div>
-      </div>
       <button class="btn ghost" id="settingsBack">Zurück</button>
     </div>
 
@@ -1500,6 +1530,14 @@
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
+
+// Geraet (im Hub gewaehlt: 'pc' | 'mobile'); Fallback ueber Touch-Faehigkeit.
+const IS_MOBILE = (function () {
+  const d = localStorage.getItem('zockifyDevice');
+  if (d === 'mobile') return true;
+  if (d === 'pc') return false;
+  return ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+})();
 const GROUND_DEFAULT = 64;          // Boden für alle Level etwas schmaler (war 80)
 let GROUND_H = GROUND_DEFAULT;      // aktueller Bodenwert – je Hintergrund anpassbar
 
@@ -1602,38 +1640,9 @@ function darken(hex, f) {
 function saveBgOwned() { localStorage.setItem('flappyBgOwned', JSON.stringify(bgOwned)); }
 function curBg() { return BACKGROUNDS.find(b => b.id === selectedBgId) || BACKGROUNDS[0]; }
 
-// --- Admin-Modus ---
-const ADMIN_CODE = '1432149admin12';
-let adminMode = localStorage.getItem('flappyAdmin') === '1';
+// --- Admin-Modus (global ueber den Hub gesteuert: localStorage 'zockifyAdmin') ---
+const adminMode = localStorage.getItem('zockifyAdmin') === '1';
 if (adminMode) { owned = SKINS.map(s => s.id); bgOwned = BACKGROUNDS.map(b => b.id); } // alles freigeschaltet
-function activateAdmin() {
-  // vorherigen Stand sichern (nur beim ersten Aktivieren)
-  if (!localStorage.getItem('flappyBackup')) {
-    localStorage.setItem('flappyBackup', JSON.stringify({ coins: coinBalance, owned, bgOwned }));
-  }
-  adminMode = true;
-  localStorage.setItem('flappyAdmin', '1');
-  owned = SKINS.map(s => s.id); saveOwned();
-  bgOwned = BACKGROUNDS.map(b => b.id); saveBgOwned();
-  coinBalance = 999999; saveCoins();
-}
-function deactivateAdmin() {
-  adminMode = false;
-  localStorage.removeItem('flappyAdmin');
-  const bk = JSON.parse(localStorage.getItem('flappyBackup') || 'null');
-  if (bk) {
-    coinBalance = bk.coins | 0; saveCoins();
-    owned = (bk.owned && bk.owned.length) ? bk.owned : ['classic']; saveOwned();
-    bgOwned = (bk.bgOwned && bk.bgOwned.length) ? bk.bgOwned : ['day']; saveBgOwned();
-    localStorage.removeItem('flappyBackup');
-  } else {
-    owned = ['classic']; saveOwned();
-    bgOwned = ['day']; saveBgOwned();
-    coinBalance = 0; saveCoins();
-  }
-  if (!owned.includes(selectedSkinId)) { selectedSkinId = 'classic'; localStorage.setItem('flappySkin', 'classic'); }
-  if (!bgOwned.includes(selectedBgId)) { selectedBgId = 'day'; localStorage.setItem('flappyBg', 'day'); }
-}
 function curSkin() { return SKINS.find(s => s.id === selectedSkinId) || SKINS[0]; }
 function saveCoins() { localStorage.setItem('flappyCoins', coinBalance); }
 function saveOwned() { localStorage.setItem('flappyOwned', JSON.stringify(owned)); }
@@ -1687,7 +1696,6 @@ function refreshMenu() {
   document.getElementById('diffSelect').textContent = cfg.label;
   document.getElementById('diffHint').textContent = cfg.hint;
   document.getElementById('menuCoins').textContent = adminMode ? '∞' : coinBalance;
-  document.getElementById('adminGear').classList.toggle('admin', adminMode);
 }
 
 function resetGame() {
@@ -1727,11 +1735,6 @@ function tap() {
   else if (state === STATE.PLAY) { bird.vy = FLAP; bird.wing = 1; }
 }
 window.addEventListener('keydown', e => {
-  // Admin-Box offen: Esc schließt sie (auch ohne Fokus im Eingabefeld); sonst keine Flap-Aktion
-  if (adminBoxOpen) {
-    if (e.code === 'Escape') { e.preventDefault(); hideAdminBox(); }
-    return;
-  }
   // Belegungs-Modus: nächste Taste dem ausgewählten Slot zuweisen
   if (bindingSlot >= 0) {
     e.preventDefault();
@@ -1761,7 +1764,6 @@ document.getElementById('diffNext').addEventListener('click', () => cycle(1));
 document.getElementById('diffSelect').addEventListener('click', () => cycle(1));
 // --- Einstellungen ---
 const keyListEl = document.getElementById('keyList');
-const adminBtn = document.getElementById('adminBtn');
 
 function renderKeyList() {
   document.getElementById('keyCountVal').textContent = flapKeyCount;
@@ -1784,7 +1786,6 @@ function changeKeyCount(d) {
   saveKeys();
   renderKeyList();
 }
-function updateAdminBtn() { adminBtn.textContent = adminMode ? '🔓 Admin verlassen' : '🔑 Admin'; }
 
 document.getElementById('keyCountPrev').addEventListener('click', () => changeKeyCount(-1));
 document.getElementById('keyCountNext').addEventListener('click', () => changeKeyCount(1));
@@ -1809,85 +1810,20 @@ if (chosenAccent === 'rainbow') document.body.classList.add('rainbow');
 if (chosenAccent === 'transparent') document.body.classList.add('btntransparent');
 if (chosenAccent) setActiveSwatch(chosenAccent);
 
-document.getElementById('adminGear').addEventListener('click', () => {
+document.getElementById('settingsGear').addEventListener('click', () => {
   bindingSlot = -1;
-  hideAdminBox();
   menuEl.classList.add('hidden');
   settingsEl.classList.remove('hidden');
   renderKeyList();
-  updateAdminBtn();
 });
 function closeSettings() {
   bindingSlot = -1;
-  hideAdminBox();
   settingsEl.classList.add('hidden');
   menuEl.classList.remove('hidden');
   refreshMenu();
 }
 document.getElementById('settingsBack').addEventListener('click', closeSettings);
 
-// Admin-Code-Box (komplett im Spiel, keine Browser-Dialoge)
-const adminBox = document.getElementById('adminBox');
-const adminInput = document.getElementById('adminInput');
-const adminMsg = document.getElementById('adminMsg');
-const adminOk = document.getElementById('adminOk');
-let adminAction = 'enter';   // 'enter' = Code eingeben, 'leave' = Admin verlassen
-let adminBoxOpen = false;    // ist die Code-/Verlassen-Box gerade offen?
-
-// Box komplett ausblenden -> nur der Admin-Button bleibt
-function hideAdminBox() {
-  adminBoxOpen = false;
-  adminBox.style.display = 'none';      // Inline-Style: schlägt jede Klassen-Regel
-  adminBtn.style.display = '';          // Admin-Button wieder anzeigen
-  adminInput.value = '';
-}
-function showAdminBox() {
-  adminBoxOpen = true;
-  if (adminMode) {
-    adminAction = 'leave';
-    adminMsg.textContent = 'Admin verlassen? Münzen & Skins werden zurückgesetzt.';
-    adminMsg.className = 'adminmsg';
-    adminInput.style.display = 'none';
-    adminOk.textContent = 'Verlassen';
-  } else {
-    adminAction = 'enter';
-    adminMsg.textContent = '';
-    adminMsg.className = 'adminmsg';
-    adminInput.style.display = '';
-    adminInput.value = '';
-    adminOk.textContent = 'OK';
-  }
-  adminBtn.style.display = 'none';      // Admin-Button ausblenden, solange die Box offen ist
-  adminBox.style.display = 'flex';
-  if (adminAction === 'enter') adminInput.focus();
-}
-function confirmAdmin() {
-  if (adminAction === 'leave') {
-    deactivateAdmin();
-    updateAdminBtn();
-    hideAdminBox();
-    refreshMenu();
-    return;
-  }
-  if (adminInput.value === ADMIN_CODE) {
-    activateAdmin();
-    updateAdminBtn();
-    hideAdminBox();
-  } else {
-    adminMsg.textContent = '❌ Falscher Code.';
-    adminMsg.className = 'adminmsg err';
-    adminInput.value = '';
-    adminInput.focus();
-  }
-}
-adminBtn.addEventListener('click', showAdminBox);
-adminOk.addEventListener('click', confirmAdmin);
-document.getElementById('adminCancel').addEventListener('click', hideAdminBox);
-adminInput.addEventListener('keydown', e => {
-  e.stopPropagation();   // Eingabe darf nicht als Flap-/Belegungs-Taste wirken
-  if (e.code === 'Enter' || e.code === 'NumpadEnter') confirmAdmin();
-  else if (e.code === 'Escape') hideAdminBox();
-});
 document.getElementById('playBtn').addEventListener('click', gotoReady);
 document.getElementById('retryBtn').addEventListener('click', gotoReady);
 document.getElementById('menuBtn').addEventListener('click', gotoMenu);
@@ -2894,15 +2830,17 @@ function drawHud() {
 
 function drawReadyHint() {
   if (state !== STATE.READY) return;
+  const startTxt = IS_MOBILE ? 'Tippen zum Starten' : 'Leertaste/Klick zum Starten';
+  const startEmo = IS_MOBILE ? '👆' : '🖱️';
   ctx.save();
   ctx.textAlign = 'center';
   ctx.fillStyle = 'rgba(0,0,0,0.4)';
   ctx.font = "700 22px 'Segoe UI', sans-serif";
-  ctx.fillText('Tippen zum Starten', W/2 + 1, 161);
+  ctx.fillText(startTxt, W/2 + 1, 161);
   ctx.fillStyle = '#fff';
-  ctx.fillText('Tippen zum Starten', W/2, 160);
+  ctx.fillText(startTxt, W/2, 160);
   ctx.font = "30px 'Segoe UI', sans-serif";
-  ctx.fillText('👆', W/2, 205);
+  ctx.fillText(startEmo, W/2, 205);
   ctx.font = "600 14px 'Segoe UI', sans-serif";
   ctx.fillStyle = 'rgba(255,255,255,0.85)';
   ctx.fillText(cfg.label, W/2, 118);
@@ -3187,7 +3125,7 @@ loop();
         <input type="range" id="mistakeSlider" class="slider" min="-1" max="25" value="5">
       </div>
       <div class="group-label" style="margin-top:16px">So gehts</div>
-      <p style="color:var(--muted);font-size:14px;line-height:1.5;margin:0;">
+      <p id="howto" style="color:var(--muted);font-size:14px;line-height:1.5;margin:0;">
         Tippe das Feld an, das eine andere Farbe hat. Jeder Treffer bringt Punkte und etwas Zeit –
         das Raster wird größer und der Unterschied kleiner. Daneben getippt kostet Zeit.
         Läuft die Zeit ab, ist Schluss.
@@ -3253,6 +3191,25 @@ loop();
     insane: { time: 9,  startCols: 3, bonus: 0.8, penalty: 3.5, deltaBase: 40, deltaMin: 6,  grow: 0.7,  maxCols: 9 },
   };
   const BEST_KEY = "farbsuche_best";
+
+  // Geraet (im Hub gewaehlt: 'pc' | 'mobile'); Fallback ueber Touch-Faehigkeit.
+  const IS_MOBILE = (function () {
+    const d = localStorage.getItem('zockifyDevice');
+    if (d === 'mobile') return true;
+    if (d === 'pc') return false;
+    return ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+  })();
+  // Steuerungs-Erklaerung ("So gehts") je nach Geraet: tippen (Mobile) / klicken (PC)
+  (function setHowto() {
+    const el = document.getElementById("howto");
+    if (!el) return;
+    const verb  = IS_MOBILE ? "Tippe"   : "Klicke";
+    const verb2 = IS_MOBILE ? "getippt" : "geklickt";
+    el.textContent =
+      verb + " das Feld an, das eine andere Farbe hat. Jeder Treffer bringt Punkte und etwas Zeit – "
+      + "das Raster wird größer und der Unterschied kleiner. Daneben " + verb2 + " kostet Zeit. "
+      + "Läuft die Zeit ab, ist Schluss.";
+  })();
 
   let diffName = "normal";
   let cfg = DIFF[diffName];
@@ -3574,6 +3531,8 @@ loop();
   .stat b { color: var(--accent); }
   /* Zockify-Zurueck-Button (injiziert): passt sich der Spielfarbe an */
   #zockifyBack { background: linear-gradient(90deg, var(--accent), var(--accent-dark)); color: #04130c; border: none; font-family: inherit; font-weight: 700; }
+  /* Regenbogen-Knopffarbe: --accent ist dann blau -> Zurueck-Button trotzdem als Regenbogen */
+  body.rainbow #zockifyBack { background: linear-gradient(90deg,#f87171,#fb923c,#fbbf24,#34d399,#38bdf8,#a78bfa); color: #04130c; }
   .hidden { display: none !important; }
 
   /* ---------- Zahnrad + Einstellungen ---------- */
@@ -3729,8 +3688,7 @@ loop();
     <button class="play ghost" id="shopBtn">🛒 Shop</button>
   </div>
   <div class="hint">
-    <b>Steuerung:</b> Maus/Finger bewegt die Schlange ·
-    <b>Halten</b> oder <b>Leertaste</b> für Boost (kostet Länge) · <b>Esc</b> beendet die Runde.
+    <span id="ctrlHint"></span>
     Renne in andere Schlangen rein, dann zerplatzen sie und du frisst ihre Reste.
     Deine erreichte Länge gibt es als <b>💰 Punkte</b> für den Shop.
   </div>
@@ -3843,17 +3801,37 @@ const SKINS = [
   { id: 'galaxy',  name: 'Galaxie',         price: 3500, type: 'gradient', hue: 270, hue2: 200, glow: true },
   { id: 'rainbow', name: 'Regenbogen',      price: 5000, type: 'rainbow',  glow: true },
   // ----- Design-Skins mit Motiv (Franchise-Themen, eigene Grafik) -----
-  { id: 'vader',  name: 'Darth Vader',  price: 4000, design: 'saber',   bg: '#0a0a0a', deco: '#ff2a2a' },
-  { id: 'luke',   name: 'Jedi · Grün',  price: 4000, design: 'saber',   bg: '#0a0a0a', deco: '#36ff5a' },
-  { id: 'obiwan', name: 'Jedi · Blau',  price: 4000, design: 'saber',   bg: '#0a0a0a', deco: '#3aa0ff' },
+  { id: 'vader',  name: 'Rotes Lichtschwert',  price: 4000, design: 'saber',   bg: '#0a0a0a', deco: '#ff2a2a' },
+  { id: 'luke',   name: 'Grünes Lichtschwert', price: 4000, design: 'saber',   bg: '#0a0a0a', deco: '#36ff5a' },
+  { id: 'obiwan', name: 'Blaues Lichtschwert', price: 4000, design: 'saber',   bg: '#0a0a0a', deco: '#3aa0ff' },
   { id: 'germany',name: 'Deutschland',  price: 3000, type: 'palette',   cols: ['#111111','#dd0000','#ffce00'] },
   { id: 'spider', name: 'Spider-Man',   price: 3500, design: 'web',     bg: '#d11f2d', deco: '#0a0a16' },
 ];
 let coins = parseInt(localStorage.getItem('slitherCoins') || '0', 10);
 let ownedSkins = JSON.parse(localStorage.getItem('slitherOwnedSkins') || '["green"]');
 let selectedSkin = localStorage.getItem('slitherSkin') || 'green';
+// Admin-Modus (global ueber den Hub: localStorage 'zockifyAdmin') -> alles freigeschaltet
+const adminMode = localStorage.getItem('zockifyAdmin') === '1';
+if (adminMode) { ownedSkins = SKINS.map(s => s.id); coins = 999999; }
+
+// Geraet (im Hub gewaehlt: 'pc' | 'mobile'); Fallback ueber Touch-Faehigkeit.
+const IS_MOBILE = (function () {
+  const d = localStorage.getItem('zockifyDevice');
+  if (d === 'mobile') return true;
+  if (d === 'pc') return false;
+  return ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+})();
+// Steuerungs-Erklaerung je nach Geraet
+(function setCtrlHint() {
+  const el = document.getElementById('ctrlHint');
+  if (!el) return;
+  el.innerHTML = IS_MOBILE
+    ? '<b>Steuerung:</b> Finger bewegt die Schlange · <b>BOOST-Knopf halten</b> für Tempo (kostet Länge).'
+    : '<b>Steuerung:</b> Maus bewegt die Schlange · <b>Maustaste halten</b> oder <b>Leertaste</b> für Boost (kostet Länge) · <b>Esc</b> beendet die Runde.';
+})();
 function skinById(id) { return SKINS.find(s => s.id === id) || SKINS[0]; }
 function saveShop() {
+  if (adminMode) return;   // Admin: echten Speicherstand (Punkte/Skins) nicht ueberschreiben
   localStorage.setItem('slitherCoins', coins);
   localStorage.setItem('slitherOwnedSkins', JSON.stringify(ownedSkins));
   localStorage.setItem('slitherSkin', selectedSkin);
@@ -4293,7 +4271,7 @@ function endGame(reason) {
   coins += earned;
   saveShop();
   refreshCoinUI();
-  document.getElementById('ovCoins').innerHTML = `💰 <b style="color:#fbbf24">+${earned}</b> Punkte · Guthaben: <b style="color:#fbbf24">${coins}</b>`;
+  document.getElementById('ovCoins').innerHTML = `💰 <b style="color:#fbbf24">+${earned}</b> Punkte · Guthaben: <b style="color:#fbbf24">${adminMode ? '∞' : coins}</b>`;
   document.getElementById('overTitle').textContent = reason;
   document.getElementById('over').classList.remove('hidden');
 }
@@ -4471,6 +4449,37 @@ function drawSnake(s) {
   }
 }
 
+// Schwarze Spinne (Spider-Man-Emblem) – aufrecht gezeichnet, zentriert auf (cx,cy)
+function drawSpider(cx, cy, sz) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.fillStyle = '#0a0a0a';
+  ctx.strokeStyle = '#0a0a0a';
+  ctx.lineWidth = Math.max(1, sz * 0.12);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  // 8 gebogene Beine (4 pro Seite)
+  const legLen = sz * 1.25;
+  for (const side of [-1, 1]) {
+    for (let k = 0; k < 4; k++) {
+      const t = k / 3;                       // 0..1 von vorne nach hinten
+      const ay = (t - 0.5) * sz * 0.85;      // Ansatz am Körper
+      const kneeX = side * sz * 0.8;
+      const kneeY = ay - sz * 0.35 + t * sz * 0.5;
+      const footX = side * legLen;
+      const footY = ay + sz * 0.35 + t * sz * 0.35;
+      ctx.beginPath();
+      ctx.moveTo(0, ay);
+      ctx.quadraticCurveTo(kneeX, kneeY, footX, footY);
+      ctx.stroke();
+    }
+  }
+  // Körper: Hinterleib (gross) + Vorderleib (klein)
+  ctx.beginPath(); ctx.ellipse(0, sz * 0.34, sz * 0.4, sz * 0.58, 0, 0, TAU); ctx.fill();
+  ctx.beginPath(); ctx.arc(0, -sz * 0.36, sz * 0.32, 0, TAU); ctx.fill();
+  ctx.restore();
+}
+
 // Design-Skins mit echtem Motiv (z. B. leuchtendes Lichtschwert)
 function drawDesigned(s, x0, y0, r, n, hsx, hsy) {
   const trace = () => {
@@ -4518,18 +4527,13 @@ function drawDesigned(s, x0, y0, r, n, hsx, hsy) {
       ctx.beginPath(); ctx.arc(p.x, p.y, r * 0.36, 0, TAU); ctx.fillStyle = s.deco; ctx.fill();
     }
   } else if (D === 'web') {
-    // schwarze Quer-Rippen + Längslinie (Spinnennetz)
-    ctx.strokeStyle = s.deco; ctx.lineWidth = Math.max(1.5, r * 0.2);
-    for (let i = n - 2; i >= 1; i -= 3) {
-      const a = s.pts[i], b = s.pts[i - 1];
-      const dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy) || 1;
-      const nx = -dy / L, ny = dx / L, cx = a.x - x0, cy = a.y - y0;
-      ctx.beginPath();
-      ctx.moveTo(cx - nx * r * 0.85, cy - ny * r * 0.85);
-      ctx.lineTo(cx + nx * r * 0.85, cy + ny * r * 0.85);
-      ctx.stroke();
+    // Spider-Man: feine Längslinie (Netz) + schwarze Spinnen entlang des Körpers
+    ctx.strokeStyle = s.deco; ctx.lineWidth = Math.max(1.2, r * 0.14);
+    trace(); ctx.stroke();
+    for (let i = n - 3; i >= 2; i -= 8) {
+      const p = seg(i);
+      drawSpider(p.x, p.y, r * 0.72);
     }
-    trace(); ctx.lineWidth = Math.max(1.5, r * 0.16); ctx.stroke();
   }
 
   // Boost-Glow (saber leuchtet ohnehin)
@@ -4542,7 +4546,10 @@ function drawDesigned(s, x0, y0, r, n, hsx, hsy) {
   // Kopf
   ctx.beginPath(); ctx.arc(hsx, hsy, r, 0, TAU); ctx.fillStyle = s.bg; ctx.fill();
 
-  if (D === 'creeper') {
+  if (D === 'web') {
+    // grosse schwarze Spinne auf dem Kopf (Spider-Man-Emblem)
+    drawSpider(hsx, hsy, r * 0.92);
+  } else if (D === 'creeper') {
     // Creeper-Gesicht
     const u = r * 0.34;
     ctx.fillStyle = s.deco;
@@ -4707,8 +4714,8 @@ const coinBalEl = document.getElementById('coinBal');
 const shopBalEl = document.getElementById('shopBal');
 
 function refreshCoinUI() {
-  coinBalEl.textContent = coins;
-  shopBalEl.textContent = coins;
+  coinBalEl.textContent = adminMode ? '∞' : coins;
+  shopBalEl.textContent = adminMode ? '∞' : coins;
 }
 
 function skinPreviewBg(sk) {
@@ -4878,6 +4885,68 @@ document.getElementById('nameIn').addEventListener('input', e => localStorage.se
     currentGame = null;
     try { sessionStorage.removeItem(GAME_KEY); } catch (_) {}
   }
+
+  // ---------- Hub-Admin: ein Code, alle Spiele alles freigeschaltet ----------
+  // Das Flag liegt im localStorage ('zockifyAdmin'). Die Spiele laufen als
+  // srcdoc-iframes im selben Origin -> sie lesen dasselbe localStorage und
+  // schalten beim Laden alles frei. Hinweis: clientseitig ist der Code nicht
+  // wirklich geheim (im Quelltext lesbar).
+  const HUB_ADMIN_CODE = '1432149admin12';
+  const ADMIN_KEY = 'zockifyAdmin';
+  const hubAdminGear  = document.getElementById('hubAdminGear');
+  const hubAdminBox   = document.getElementById('hubAdminBox');
+  const hubAdminInput = document.getElementById('hubAdminInput');
+  const hubAdminMsg   = document.getElementById('hubAdminMsg');
+  const hubAdminOk    = document.getElementById('hubAdminOk');
+
+  function isAdmin() { return localStorage.getItem(ADMIN_KEY) === '1'; }
+  function refreshAdminGear() { hubAdminGear.classList.toggle('active', isAdmin()); }
+
+  function openHubAdmin() {
+    if (isAdmin()) {
+      hubAdminMsg.textContent = 'Admin ist aktiv – verlassen?';
+      hubAdminMsg.className = 'ha-msg';
+      hubAdminInput.style.display = 'none';
+      hubAdminOk.textContent = 'Verlassen';
+    } else {
+      hubAdminMsg.textContent = '';
+      hubAdminMsg.className = 'ha-msg';
+      hubAdminInput.style.display = '';
+      hubAdminInput.value = '';
+      hubAdminOk.textContent = 'OK';
+    }
+    hubAdminBox.classList.remove('hidden');
+    if (!isAdmin()) hubAdminInput.focus();
+  }
+  function closeHubAdmin() { hubAdminBox.classList.add('hidden'); hubAdminInput.value = ''; }
+  function confirmHubAdmin() {
+    if (isAdmin()) {                                  // aktiv -> verlassen
+      localStorage.removeItem(ADMIN_KEY);
+      refreshAdminGear();
+      closeHubAdmin();
+      return;
+    }
+    if (hubAdminInput.value === HUB_ADMIN_CODE) {     // Code korrekt -> aktivieren
+      localStorage.setItem(ADMIN_KEY, '1');
+      refreshAdminGear();
+      closeHubAdmin();
+    } else {
+      hubAdminMsg.textContent = '❌ Falscher Code.';
+      hubAdminMsg.className = 'ha-msg err';
+      hubAdminInput.value = '';
+      hubAdminInput.focus();
+    }
+  }
+  hubAdminGear.addEventListener('click', openHubAdmin);
+  hubAdminOk.addEventListener('click', confirmHubAdmin);
+  document.getElementById('hubAdminCancel').addEventListener('click', closeHubAdmin);
+  hubAdminBox.addEventListener('click', e => { if (e.target === hubAdminBox) closeHubAdmin(); });
+  hubAdminInput.addEventListener('keydown', e => {
+    e.stopPropagation();
+    if (e.key === 'Enter') confirmHubAdmin();
+    else if (e.key === 'Escape') closeHubAdmin();
+  });
+  refreshAdminGear();
 
   // Ist im Spiel gerade das Spiel-Menue (#menu) offen?
   function gameInMenu() {
